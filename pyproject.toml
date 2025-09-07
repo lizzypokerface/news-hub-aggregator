@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "news-hub-aggregator"
+version = "0.1.0"
+description = ""
+authors = ["Lizzy Poker Face <165659964+lizzypokerface@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pre-commit = "^4.3.0"
+selenium = "^4.35.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
