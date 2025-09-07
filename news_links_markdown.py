@@ -12,12 +12,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from constants import NEWS_LINK_MD_FORMAT
 from utilities import system_say
 
-from categorize_headlines import categorize_headline_region
-
 
 def fetch_links(file_path: str) -> list[str]:
     logging.info(f"Reading links from {file_path}")
-    with open(file_path, "r") as file:
+    with open(file_path) as file:
         links = file.readlines()
     # Remove empty lines and strip whitespace
     links = [link.strip() for link in links if link.strip()]
@@ -40,12 +38,14 @@ def tidy_title(title: str) -> str:
 def get_embedded_link(link: str) -> str:
     return re.sub(r"\[.*?\]$", "", link)
 
+
 def get_source(line):
     # Match text between the square brackets after the URL
     match = re.search(r"\[([^\]]+)\]\[", line)
     if match:
         return match.group(1).strip()
     return "Unknown Source"
+
 
 def get_rank(line):
     # Match the number inside the square brackets at the end of the line
@@ -76,7 +76,7 @@ def get_youtube_video_title(driver: WebDriver, url: str) -> Optional[str]:
 
 def sort_dataframe_by_rank_and_source(df: pd.DataFrame) -> pd.DataFrame:
     sorted_df = df.sort_values(by=["rank", "source"], ascending=[True, False])
-    #sorted_df.to_csv("output.csv")
+    # sorted_df.to_csv("output.csv")
     return sorted_df
 
 
@@ -84,7 +84,6 @@ def write_article_dataframe_to_markdown(
     df: pd.DataFrame,
     news_links_md_filename: str,
 ) -> None:
-
     sorted_df = sort_dataframe_by_rank_and_source(df)
 
     with open(news_links_md_filename, "w") as f:
@@ -112,7 +111,6 @@ def write_article_dataframe_to_markdown(
 def process_markdown_links(
     processed_links_filename: str, news_links_md_filename: str
 ) -> pd.DataFrame:
-
     processed_links = fetch_links(processed_links_filename)
     youtube_links = []
     other_links = []
