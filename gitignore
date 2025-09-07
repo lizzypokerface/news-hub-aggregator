@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+env/
+.direnv/
+
+# Poetry specific
+.poetry/
+poetry.lock  # Generally recommended to include, but can be ignored if desired
+__pypackages__/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+htmlcov/
+.nox/
+.mypy_cache/
+.coverage
+
+# Editor and OS specific
+.DS_Store
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+Thumbs.db
