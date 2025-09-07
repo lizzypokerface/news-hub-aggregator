@@ -31,3 +31,6 @@ htmlcov/
 *.sublime-project
 *.sublime-workspace
 Thumbs.db
+
+# Pre-commit specific
+.ruff_cache
