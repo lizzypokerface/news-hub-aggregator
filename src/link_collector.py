@@ -22,14 +22,19 @@ class LinkCollector:
     text file. Finally, it processes these links into a structured pandas DataFrame.
     """
 
-    def __init__(self, sources: List[Dict[str, Any]], input_directory: str):
+    def __init__(
+        self,
+        sources: List[Dict[str, Any]],
+        input_directory: str,
+        input_file: str = "raw_links.txt",
+    ):
         if not sources:
             logging.warning(
                 "The provided source list is empty. No links will be collected."
             )
         self.sources = sources
         self.input_directory = input_directory
-        self.raw_links_path = os.path.join(self.input_directory, "raw_links.txt")
+        self.raw_links_path = os.path.join(self.input_directory, input_file)
         self.driver = self._init_driver()
         self._ensure_input_dir_exists()
 

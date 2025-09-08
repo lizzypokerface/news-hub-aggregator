@@ -10,6 +10,7 @@ python = "^3.9"
 pre-commit = "^4.3.0"
 selenium = "^4.35.0"
 pandas = "^2.3.2"
+beautifulsoup4 = "^4.13.5"
 
 
 [build-system]
