@@ -21,36 +21,36 @@ date:   {} 11:00:00 +0800
 categories: weekly news
 ---
 
-# Global  
+# Global
 
-# China  
+# China
 
-# East Asia  
+# East Asia
 
-# Singapore  
+# Singapore
 
-# Southeast Asia  
+# Southeast Asia
 
-# South Asia  
+# South Asia
 
-# Central Asia  
+# Central Asia
 
-# Russia  
+# Russia
 
-# Oceania  
+# Oceania
 
-# Middle East (West Asia)  
+# Middle East (West Asia)
 
-# Africa  
+# Africa
 
-# Europe  
+# Europe
 
-# Latin America & Caribbean  
+# Latin America & Caribbean
 
-# North America  
+# North America
 
-# In-Depth Analysis  
+# In-Depth Analysis
 
-# Special Features  
+# Special Features
 
 """

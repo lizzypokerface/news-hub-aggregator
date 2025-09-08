@@ -18,4 +18,6 @@ def create_weekly_news_post_template(current_date: datetime):
         f"Creating weekly news post template. Filename: {filename}, Display Date: {date_display}"
     )
     create_new_file(filename, template)
-    logging.info(f"Git commit with message: {NEWS_POST_COMMIT_MSG.format(date_display)}")
+    logging.info(
+        f"Git commit with message: {NEWS_POST_COMMIT_MSG.format(date_display)}"
+    )

@@ -22,12 +22,14 @@ def process_links(
     raw_links_file: str, processed_links_file: str, source_title: str, source_rank: int
 ) -> None:
     # Read links from raw_links.txt and write to processed_links.txt
-    with open(raw_links_file, "r") as raw_file, open(
+    with open(raw_links_file) as raw_file, open(
         processed_links_file, "a"
     ) as processed_file:
         for line in raw_file:
             url = line.strip()
-            processed_file.write(PROCESSED_LINK_FORMAT.format(url, source_title, source_rank))
+            processed_file.write(
+                PROCESSED_LINK_FORMAT.format(url, source_title, source_rank)
+            )
 
 
 def perform_news_research(new_sources_filename: str):
