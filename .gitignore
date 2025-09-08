@@ -1,5 +1,7 @@
-# config
+# Project-specific ignores
 config.yaml
+outputs/
+inputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
