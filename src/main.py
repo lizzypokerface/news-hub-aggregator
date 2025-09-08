@@ -3,6 +3,7 @@ import logging
 from config_manager import ConfigManager
 from link_collector import LinkCollector
 from title_fetcher import TitleFetcher
+from region_categoriser import RegionCategorizer
 
 if __name__ == "__main__":
     try:
@@ -44,16 +45,13 @@ if __name__ == "__main__":
             # Save links to CSV in the output directory
             output_dir = config.get("output_directory", "../outputs/")
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(
-                output_dir, "p1_collected_analysis_links.csv"
-            )  # Fixed backtick typo
+            output_path = os.path.join(output_dir, "p1_collected_analysis_links.csv")
             links_df.to_csv(output_path, index=False)
             logging.info(f"Links successfully saved to '{output_path}'")
 
             # ----------------------------------------
             # Phase 2: Title Fetching
             # ----------------------------------------
-
             logging.info(
                 "\n--- Link Collection Complete. Starting Phase 2: Title Fetching ---"
             )
@@ -78,8 +76,26 @@ if __name__ == "__main__":
                 logging.info(f"Process complete. Final data saved to '{output_path}'")
             else:
                 logging.warning("Title fetching did not produce any results.")
-        else:
-            print("\nProcess complete. No new links were collected.")
+
+            # ----------------------------------------
+            # Phase 3: Region Categorization
+            # ----------------------------------------
+            logging.info("\n--- Starting Phase 3: Region Categorization ---")
+
+            # Initialize and run the categorizer
+            categorizer = RegionCategorizer(input_df=df_with_titles)
+            df_with_regions = categorizer.categorize_regions()
+
+            print("\n--- Final DataFrame with Regions ---")
+            print(df_with_regions.to_string())
+
+            # Save final data to CSV
+            output_dir = config.get("output_directory", "../outputs/")
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, "p3_articles_with_regions.csv")
+
+            df_with_regions.to_csv(output_path, index=False)
+            logging.info(f"Process complete. Final data saved to '{output_path}'")
 
     except FileNotFoundError as e:
         logging.error(e)

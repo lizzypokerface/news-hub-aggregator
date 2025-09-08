@@ -11,6 +11,9 @@ pre-commit = "^4.3.0"
 selenium = "^4.35.0"
 pandas = "^2.3.2"
 beautifulsoup4 = "^4.13.5"
+ollama = "^0.5.3"
+langchain-community = "^0.3.29"
+langchain-core = "^0.3.75"
 
 
 [build-system]
