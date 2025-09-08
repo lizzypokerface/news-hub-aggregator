@@ -1,9 +1,12 @@
 import os
 import logging
+from datetime import datetime
 from config_manager import ConfigManager
 from link_collector import LinkCollector
 from title_fetcher import TitleFetcher
 from region_categoriser import RegionCategorizer
+from markdown_generator import MarkdownGenerator
+
 
 if __name__ == "__main__":
     try:
@@ -17,7 +20,6 @@ if __name__ == "__main__":
         # ----------------------------------------
         # Phase 1: Link Collection
         # ----------------------------------------
-
         # Load configuration from YAML file
         config_manager = ConfigManager("../config.yaml")
         config = config_manager.data
@@ -96,6 +98,20 @@ if __name__ == "__main__":
 
             df_with_regions.to_csv(output_path, index=False)
             logging.info(f"Process complete. Final data saved to '{output_path}'")
+
+            # ----------------------------------------
+            # Phase 4: Markdown Post Generation
+            # ----------------------------------------
+            logging.info("\n--- Starting Phase 4: Markdown Post Generation ---")
+            generator = MarkdownGenerator(
+                input_df=df_with_regions,
+                output_directory=output_dir,
+                current_date=datetime.now(),
+            )
+            generator.generate_markdown_post()
+            logging.info(
+                "\nAll phases complete. The weekly news post has been generated."
+            )
 
     except FileNotFoundError as e:
         logging.error(e)
