@@ -45,7 +45,7 @@ if __name__ == "__main__":
             output_dir = config.get("output_directory", "../outputs/")
             os.makedirs(output_dir, exist_ok=True)
             output_path = os.path.join(
-                output_dir, "collected_analysis_links.csv"
+                output_dir, "p1_collected_analysis_links.csv"
             )  # Fixed backtick typo
             links_df.to_csv(output_path, index=False)
             logging.info(f"Links successfully saved to '{output_path}'")
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                 # Save final data to CSV
                 output_dir = config.get("output_directory", "../outputs/")
                 os.makedirs(output_dir, exist_ok=True)
-                output_path = os.path.join(output_dir, "articles_with_titles.csv")
+                output_path = os.path.join(output_dir, "p2_articles_with_titles.csv")
 
                 df_with_titles.to_csv(output_path, index=False)
                 logging.info(f"Process complete. Final data saved to '{output_path}'")
