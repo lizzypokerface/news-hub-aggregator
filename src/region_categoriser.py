@@ -35,19 +35,19 @@ PROMPT_TEMPLATE = ChatPromptTemplate.from_messages(
         {', '.join(CATEGORIES)}
 
         - 'Global': Use for articles involving multiple distinct regions (e.g., a US-China summit, a UN resolution).
-        - 'North America': For the United States and Canada.
-        - 'Latin America & Caribbean': For countries in Central and South America, and the Caribbean.
-        - 'Europe': For European countries, including the UK and the European Union as an entity.
-        - 'Africa': For countries on the African continent.
-        - 'Russia': For articles primarily about Russia.
-        - 'West Asia (Middle East)': For countries like Lebanon, Iran, Saudi Arabia, Palestine, etc.
-        - 'Central Asia': For Kazakhstan, Uzbekistan, etc.
-        - 'South Asia': For India, Pakistan, Bangladesh, Sri Lanka.
-        - 'Southeast Asia': For countries like Vietnam, Thailand, Indonesia, Malaysia, Philippines.
-        - 'Singapore': Use ONLY for articles specifically about Singapore.
-        - 'East Asia': For Japan, South Korea, North Korea.
         - 'China': For articles primarily about China.
+        - 'East Asia': For Japan, South Korea, North Korea.
+        - 'Singapore': Use ONLY for articles specifically about Singapore.
+        - 'Southeast Asia': For countries like Vietnam, Thailand, Indonesia, Malaysia, Philippines.
+        - 'South Asia': For India, Pakistan, Bangladesh, Sri Lanka.
+        - 'Central Asia': For Kazakhstan, Uzbekistan, etc.
+        - 'Russia': For articles primarily about Russia.
         - 'Oceania': For Australia, New Zealand, Pacific Islands.
+        - 'West Asia (Middle East)': For countries like Lebanon, Iran, Saudi Arabia, Palestine, etc.
+        - 'Africa': For countries on the African continent.
+        - 'Europe': For European countries, including the UK and the European Union as an entity.
+        - 'Latin America & Caribbean': For countries in Central and South America, and the Caribbean.
+        - 'North America': For the United States and Canada.
         - 'Unknown': Use ONLY if you cannot determine the region with confidence.
 
         Analyze the geographic entities (countries, cities, regions) mentioned in the title. The source can also be a strong clue.
