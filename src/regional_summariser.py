@@ -64,7 +64,7 @@ class RegionalSummariser:
     Summarizes a text block of event summaries by geographic region using an LLM.
     """
 
-    def __init__(self, model: str = "llama3.1"):
+    def __init__(self, model: str = "qwen2.5:14b"):
         """
         Initializes the regional summarizer.
 

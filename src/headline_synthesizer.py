@@ -67,7 +67,7 @@ class HeadlineSynthesizer:
     Fetches and synthesizes YouTube headlines to summarize world events.
     """
 
-    def __init__(self, api_key: str, model: str = "qwen:32b"):
+    def __init__(self, api_key: str, model: str = "qwen2.5:14b"):
         """
         Initializes the synthesizer with API connections.
 
