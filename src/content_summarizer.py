@@ -229,7 +229,7 @@ class ContentSummarizer:
     Fetches, parses, and summarizes content from YouTube or webpages using a hybrid approach.
     """
 
-    def __init__(self, poe_api_key: str, model: str = "Gemini-1.5-Pro"):
+    def __init__(self, poe_api_key: str, model: str = "Gemini-2.5-Flash"):
         self.model = model
         try:
             self.client = openai.OpenAI(
