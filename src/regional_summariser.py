@@ -2,19 +2,15 @@
 
 import logging
 import time
-
-from langchain_community.llms import Ollama
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
+import openai  # Use the openai library for Poe API calls
 
 # --- Basic Logging Configuration ---
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# --- LLM Prompt Template for Regional Summarization ---
-REGIONAL_PROMPT_TEMPLATE = PromptTemplate.from_template(
-    """
+# --- LLM Prompt Template (as a standard f-string) ---
+REGIONAL_PROMPT_STRING = """
 You are a geopolitical analyst and expert summarizer. Your task is to read a collection of event summaries from different news sources and reorganize them by geographic region into a final, clean intelligence briefing.
 
 ---
@@ -56,30 +52,34 @@ You are a geopolitical analyst and expert summarizer. Your task is to read a col
 
 **REGIONAL SUMMARY:**
 """
-)
 
 
 class RegionalSummariser:
     """
-    Summarizes a text block of event summaries by geographic region using an LLM.
+    Summarizes a text block of event summaries by geographic region using the Poe API.
     """
 
-    def __init__(self, model: str = "qwen2.5:14b"):
+    def __init__(self, poe_api_key: str, model: str = "Gemini-2.5-Pro"):
         """
-        Initializes the regional summarizer.
+        Initializes the regional summarizer with a Poe API client.
 
         Args:
-            model (str): The Ollama model to use for synthesis.
+            poe_api_key (str): Your key for the Poe API.
+            model (str): The Poe model to use (e.g., "Gemini-1.5-Pro", "Claude-3-Opus").
         """
+        self.model = model
         try:
-            llm = Ollama(model=model, temperature=0.0)
-            self.llm_chain = REGIONAL_PROMPT_TEMPLATE | llm | StrOutputParser()
+            # Initialize the OpenAI client pointed at the Poe API endpoint
+            self.client = openai.OpenAI(
+                api_key=poe_api_key,
+                base_url="https://api.poe.com/v1",
+            )
             logging.info(
-                f"RegionalSummarizer initialized successfully with model '{model}'."
+                f"RegionalSummariser initialized successfully for Poe API with model '{model}'."
             )
         except Exception as e:
             logging.error(
-                f"Failed to initialize Ollama for RegionalSummarizer. Is the service running? Error: {e}"
+                f"Failed to initialize Poe API client. Check API key or library installation. Error: {e}"
             )
             raise
 
@@ -99,11 +99,25 @@ class RegionalSummariser:
             )
             return ""
 
-        logging.info("Starting regional synthesis of the event summaries...")
+        logging.info(
+            "Starting regional synthesis of the event summaries via Poe API..."
+        )
+
+        # Format the prompt with the input content
+        final_prompt = REGIONAL_PROMPT_STRING.format(input_text=markdown_content)
 
         try:
             start_time = time.monotonic()
-            regional_summary = self.llm_chain.invoke({"input_text": markdown_content})
+
+            # Make the API call using the initialized client
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": final_prompt}],
+                temperature=0.0,  # For deterministic output
+            )
+
+            regional_summary = response.choices[0].message.content
+
             end_time = time.monotonic()
             duration = end_time - start_time
 
@@ -113,6 +127,8 @@ class RegionalSummariser:
             return regional_summary.strip()
         except Exception as e:
             logging.error(
-                f"Regional synthesis failed. Could not connect to Ollama: {e}"
+                f"Regional synthesis failed. Error communicating with Poe API: {e}"
             )
-            return "Error: Regional synthesis failed due to an LLM communication error."
+            return (
+                "Error: Regional synthesis failed due to a Poe API communication error."
+            )

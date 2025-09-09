@@ -14,6 +14,9 @@ logging.basicConfig(
 
 
 def main():
+    """
+    Main function to orchestrate the headline synthesis and regional summarization process.
+    """
     logging.info("--- Starting Global Event Synthesis ---")
 
     try:
@@ -23,12 +26,20 @@ def main():
         config_manager = ConfigManager("../config.yaml")
         config = config_manager.data
 
-        youtube_api_key = config.get("api_keys", {}).get("youtube_api")
+        # Get the entire api_keys dictionary
+        api_keys = config.get("api_keys", {})
+        youtube_api_key = api_keys.get("youtube_api")
+        poe_api_key = api_keys.get("poe_api")
+
         sources = config.get("sources", [])
         output_dir = config.get("output_directory", "outputs")
 
+        # --- Configuration Validation ---
         if not youtube_api_key:
             logging.error("YouTube API key not found in config.yaml. Exiting.")
+            return
+        if not poe_api_key:
+            logging.error("Poe API key ('poe_api') not found in config.yaml. Exiting.")
             return
         if not sources:
             logging.warning("No sources found in config.yaml.")
@@ -36,7 +47,7 @@ def main():
 
         # Initialize both synthesizers at the start
         headline_synthesizer = HeadlineSynthesizer(api_key=youtube_api_key)
-        regional_summariser = RegionalSummariser()
+        regional_summariser = RegionalSummariser(poe_api_key=poe_api_key)
 
         # ----------------------------------------
         # 2. Filter Sources
