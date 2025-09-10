@@ -8,7 +8,11 @@ from urllib.parse import urlparse, parse_qs
 import openai
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import (
+    WebDriverException,
+    TimeoutException,
+    NoSuchElementException,
+)
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -152,73 +156,152 @@ def extract_transcript_youtube_api(youtube_url: str) -> str:
 
 
 def extract_transcript_youtube_tactiq(youtube_url: str) -> str:
-    """Extracts the transcript of a YouTube video using Tactiq.io via Selenium."""
+    """Extracts the transcript of a YouTube video using Tactiq.io via Selenium with retries."""
     logger.info(
         f"Attempting to extract YouTube transcript via Tactiq.io for: {youtube_url}"
     )
     tactiq_base_url = "https://tactiq.io/tools/youtube-transcript"
-    driver = None
-    try:
-        driver = _get_firefox_driver()
-        driver.get(tactiq_base_url)
-        logger.info(f"Navigated to Tactiq.io: {tactiq_base_url}")
-        url_input_field = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.ID, "yt-2"))
-        )
-        url_input_field.send_keys(youtube_url)
-        get_transcript_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//input[@value='Get Video Transcript']")
+
+    max_retries = 2  # Total attempts: 1 initial + 2 retries
+    retry_delays = [1, 2]  # Delays in seconds for subsequent retries
+
+    cleaned_transcript_text = ""
+
+    for attempt in range(max_retries + 1):
+        driver = None
+        try:
+            logger.info(
+                f"Attempt {attempt + 1}/{max_retries + 1} to get transcript for {youtube_url}"
             )
-        )
-        get_transcript_button.click()
-        logger.info("Clicked 'Get Video Transcript' button.")
-        WebDriverWait(driver, 20).until(EC.url_contains("run/youtube_transcript"))
-        transcript_container = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.ID, "transcript"))
-        )
-        WebDriverWait(driver, 10).until(
-            lambda d: transcript_container.text.strip() != ""
-        )
-        raw_transcript_text = transcript_container.text
-        timestamp_pattern = r"\d{2}:\d{2}:\d{2}\.\d{3}\s*"
-        cleaned_transcript_text = re.sub(timestamp_pattern, "", raw_transcript_text)
-        logger.info("Timestamps removed from Tactiq.io transcript.")
-        return cleaned_transcript_text.strip()
-    except Exception as e:
-        logger.error(
-            f"An unexpected error occurred during Tactiq.io transcript extraction for {youtube_url}: {e}"
-        )
-        return ""
-    finally:
-        if driver:
-            driver.quit()
+            driver = _get_firefox_driver()
+            driver.get(tactiq_base_url)
+            logger.info(f"Navigated to Tactiq.io: {tactiq_base_url}")
+
+            url_input_field = WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.ID, "yt-2"))
+            )
+            url_input_field.send_keys(youtube_url)
+
+            get_transcript_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//input[@value='Get Video Transcript']")
+                )
+            )
+            get_transcript_button.click()
+            logger.info("Clicked 'Get Video Transcript' button.")
+
+            # Wait for the URL to change, indicating the transcript page
+            WebDriverWait(driver, 20).until(EC.url_contains("run/youtube_transcript"))
+
+            # Wait for the transcript container to be present and then for its text to be non-empty
+            transcript_container = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "transcript"))
+            )
+            WebDriverWait(driver, 10).until(
+                lambda d: transcript_container.text.strip() != ""
+            )
+
+            raw_transcript_text = transcript_container.text
+            timestamp_pattern = r"\d{2}:\d{2}:\d{2}\.\d{3}\s*"
+            cleaned_transcript_text = re.sub(timestamp_pattern, "", raw_transcript_text)
+            logger.info("Timestamps removed from Tactiq.io transcript.")
+
+            if cleaned_transcript_text.strip():
+                logger.info(
+                    f"Successfully retrieved transcript on attempt {attempt + 1}."
+                )
+                return cleaned_transcript_text.strip()
+            else:
+                logger.warning(
+                    f"Transcript was empty on attempt {attempt + 1} for {youtube_url}."
+                )
+
+        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
+            logger.warning(
+                f"Attempt {attempt + 1} failed for {youtube_url} due to a Selenium error: {e}"
+            )
+        except Exception as e:
+            logger.error(
+                f"An unexpected error occurred during Tactiq.io transcript extraction on attempt {attempt + 1} for {youtube_url}: {e}"
+            )
+        finally:
+            if driver:
+                driver.quit()
+                logger.info(f"Driver quit for attempt {attempt + 1}.")
+
+        if attempt < max_retries:
+            delay = retry_delays[attempt]
+            logger.info(f"Retrying in {delay} seconds...")
+            time.sleep(delay)
+        else:
+            logger.error(
+                f"All {max_retries + 1} attempts failed to retrieve transcript for {youtube_url}."
+            )
+
+    return cleaned_transcript_text.strip()  # Will be empty if all attempts fail
 
 
 def extract_content_webpage_selenium_bs4(webpage_url: str) -> str:
-    """Extracts cleaned text content from a dynamic webpage using Selenium (Firefox)."""
+    """Extracts cleaned text content from a dynamic webpage using Selenium (Firefox) with retries."""
     logger.info(
         f"Attempting to extract content from dynamic webpage via Selenium/BeautifulSoup for: {webpage_url}"
     )
-    driver = None
-    try:
-        driver = _get_firefox_driver()
-        driver.get(webpage_url)
-        WebDriverWait(driver, 20).until(
-            lambda d: d.find_element(By.TAG_NAME, "body").text.strip() != ""
-        )
-        html_content = driver.page_source
-        cleaned_text = _clean_html_content(html_content)
-        logger.info(f"Cleaned HTML content for {webpage_url}.")
-        return cleaned_text
-    except Exception as e:
-        logger.error(
-            f"An unexpected error occurred during dynamic webpage extraction for {webpage_url}: {e}"
-        )
-        return ""
-    finally:
-        if driver:
-            driver.quit()
+
+    max_retries = 2  # Total attempts: 1 initial + 2 retries
+    retry_delays = [1, 2]  # Delays in seconds for subsequent retries
+
+    cleaned_text = ""
+
+    for attempt in range(max_retries + 1):
+        driver = None
+        try:
+            logger.info(
+                f"Attempt {attempt + 1}/{max_retries + 1} to extract content from {webpage_url}"
+            )
+            driver = _get_firefox_driver()
+            driver.get(webpage_url)
+
+            # Wait for the body to have non-empty text, indicating content has loaded
+            WebDriverWait(driver, 20).until(
+                lambda d: d.find_element(By.TAG_NAME, "body").text.strip() != ""
+            )
+
+            html_content = driver.page_source
+            cleaned_text = _clean_html_content(html_content)
+
+            if cleaned_text.strip():
+                logger.info(
+                    f"Successfully extracted content on attempt {attempt + 1} for {webpage_url}."
+                )
+                return cleaned_text.strip()
+            else:
+                logger.warning(
+                    f"Extracted content was empty on attempt {attempt + 1} for {webpage_url}."
+                )
+
+        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
+            logger.warning(
+                f"Attempt {attempt + 1} failed for {webpage_url} due to a Selenium error: {e}"
+            )
+        except Exception as e:
+            logger.error(
+                f"An unexpected error occurred during dynamic webpage extraction on attempt {attempt + 1} for {webpage_url}: {e}"
+            )
+        finally:
+            if driver:
+                driver.quit()
+                logger.info(f"Driver quit for attempt {attempt + 1}.")
+
+        if attempt < max_retries:
+            delay = retry_delays[attempt]
+            logger.info(f"Retrying in {delay} seconds...")
+            time.sleep(delay)
+        else:
+            logger.error(
+                f"All {max_retries + 1} attempts failed to retrieve content for {webpage_url}."
+            )
+
+    return cleaned_text.strip()  # Will be empty if all attempts fail
 
 
 # --- MAIN CLASS ---
