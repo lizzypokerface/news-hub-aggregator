@@ -25,34 +25,156 @@ class TitleFetcher:
     user for manual input for each failed URL.
     """
 
-    def __init__(self, input_df: pd.DataFrame):
+    def __init__(self, input_df: pd.DataFrame, driver_reset_threshold: int = 25):
         """
         Initializes the TitleFetcher.
 
         Args:
             input_df (pd.DataFrame): DataFrame containing at least 'url' and 'format' columns.
+            driver_reset_threshold (int): The number of times the driver can be "used"
+                                          (i.e., _init_driver is called) before it's quit
+                                          and a new instance is launched to clean up RAM.
         """
         if not isinstance(input_df, pd.DataFrame) or input_df.empty:
             raise ValueError("A non-empty pandas DataFrame must be provided.")
         self.df = input_df.copy()
-        self.driver: Optional[webdriver.Firefox] = None  # Lazy initialization
+        self.driver: Optional[
+            webdriver.Firefox
+        ] = None  # Stores the current WebDriver instance
+        self._driver_use_count = (
+            0  # Counter for how many times the current driver has been requested
+        )
+        self._driver_reset_threshold = (
+            driver_reset_threshold  # The limit for the use count
+        )
+        self._current_headless_mode: Optional[
+            bool
+        ] = None  # To track the headless mode of the currently active driver
 
-    def _init_driver(self) -> None:
-        """Initializes the Selenium WebDriver if it hasn't been already."""
-        if self.driver is None:
-            logging.info("Initializing Selenium WebDriver for Firefox...")
+    def _launch_new_driver(self, headless: bool) -> None:
+        """
+        Quits any existing driver and launches a new Firefox WebDriver instance
+        with the specified headless mode. Resets the driver use count.
+
+        Args:
+            headless (bool): If True, runs Firefox in headless mode.
+        """
+        logging.info("Launching a new WebDriver instance...")
+        if self.driver:
             try:
-                self.driver = webdriver.Firefox()
-                logging.info("WebDriver initialized successfully.")
-            except WebDriverException as e:
-                logging.error(
-                    f"Failed to initialize WebDriver. Please ensure Firefox is installed. Error: {e}"
+                self.driver.quit()
+                logging.info("Existing WebDriver instance quit successfully.")
+            except Exception as e:
+                logging.warning(f"Error while quitting existing WebDriver: {e}")
+            finally:
+                self.driver = (
+                    None  # Ensure driver is set to None regardless of quit success
                 )
-                raise
+
+        try:
+            firefox_options = webdriver.FirefoxOptions()
+            if headless:
+                firefox_options.add_argument("--headless")
+                logging.info("New Firefox instance will run in headless mode.")
+            else:
+                logging.info("New Firefox instance will run in visible mode.")
+
+            # Recommended options for stability, especially in headless environments
+            firefox_options.add_argument("--no-sandbox")
+            firefox_options.add_argument("--disable-dev-shm-usage")
+
+            self.driver = webdriver.Firefox(options=firefox_options)
+            self._driver_use_count = 0  # Reset counter for the new driver
+            self._current_headless_mode = (
+                headless  # Store the mode of the newly created driver
+            )
+            logging.info("New WebDriver initialized successfully.")
+        except WebDriverException as e:
+            logging.error(
+                f"Failed to initialize WebDriver. Please ensure Firefox is installed and geckodriver is in your system's PATH. Error: {e}"
+            )
+            self.driver = None  # Ensure driver is None on failure
+            self._current_headless_mode = None
+            raise  # Re-raise the exception to propagate the error
+        except Exception as e:
+            logging.error(
+                f"An unexpected error occurred during WebDriver initialization: {e}"
+            )
+            self.driver = None
+            self._current_headless_mode = None
+            raise
+
+    def _init_driver(self, headless: bool = False) -> webdriver.Firefox:
+        """
+        Ensures a Selenium WebDriver instance is available.
+        It initializes a new driver if:
+        1. No driver currently exists.
+        2. The current driver's use count has reached the predefined threshold.
+           This is done to periodically clean up RAM and prevent resource exhaustion.
+        3. The requested 'headless' mode is different from the currently active driver's mode.
+           We cannot change headless mode on an already running browser.
+
+        Args:
+            headless (bool): If True, configures the *new* Firefox instance to run in headless mode.
+                             If False, configures it to run with a visible UI. Defaults to False.
+
+        Returns:
+            webdriver.Firefox: The active Firefox WebDriver instance.
+        """
+        self._driver_use_count += 1
+        logging.info(
+            f"Driver use count: {self._driver_use_count}/{self._driver_reset_threshold}"
+        )
+
+        # Determine if a new driver instance is needed based on:
+        # 1. No driver currently exists.
+        # 2. The current driver's use count has reached the predefined threshold.
+        #    This is crucial for RAM management and preventing resource exhaustion.
+        # 3. The requested 'headless' mode is different from the currently active driver's mode.
+        #    We cannot change headless mode on an already running browser.
+        needs_new_driver = (
+            self.driver is None
+            or self._driver_use_count >= self._driver_reset_threshold
+            or (self.driver is not None and headless != self._current_headless_mode)
+        )
+
+        if needs_new_driver:
+            logging.info("Conditions met for initializing a new WebDriver instance.")
+            self._launch_new_driver(headless)
+        else:
+            logging.info("Reusing existing WebDriver instance.")
+
+        # If driver is still None after attempting to launch (due to an error), raise an exception
+        if self.driver is None:
+            raise RuntimeError(
+                "WebDriver could not be initialized or is not available."
+            )
+
+        return self.driver
+
+    def close_driver(self):
+        """
+        Closes the Selenium WebDriver if it's active and resets all associated state.
+        This should be called when you are completely done with the driver.
+        """
+        if self.driver:
+            try:
+                self.driver.quit()
+                logging.info("WebDriver closed successfully.")
+            except Exception as e:
+                logging.warning(f"Error closing WebDriver: {e}")
+            finally:
+                # Always ensure the driver reference and state are cleared
+                self.driver = None
+                self._driver_use_count = 0
+                self._current_headless_mode = None
+        else:
+            logging.info("No active WebDriver to close.")
 
     def _get_youtube_title(self, url: str) -> Optional[str]:
         """Fetches a YouTube video title using Selenium."""
-        self._init_driver()  # Ensure driver is running
+        # Ensure the driver is ready and assigned to self.driver
+        self.driver = self._init_driver(headless=True)
         logging.info(f"Fetching YouTube title for: {url}")
         try:
             self.driver.get(url)
@@ -102,7 +224,8 @@ class TitleFetcher:
 
     def _get_title_manually(self, url: str) -> str:
         """Opens a URL and prompts the user to enter the title manually."""
-        self._init_driver()  # Ensure driver is running
+        # Ensure the driver is ready and assigned to self.driver, typically visible for manual input
+        self.driver = self._init_driver(headless=False)
         self.driver.get(url)
 
         print("\n" + "=" * 80)
@@ -135,8 +258,10 @@ class TitleFetcher:
                 print(f"\nProcessing URL {index + 1}/{len(self.df)}: {url}")
 
                 if source_format == "youtube":
+                    # _get_youtube_title will call _init_driver internally
                     title = self._get_youtube_title(url)
                 elif source_format == "webpage":
+                    # _get_webpage_title uses requests, no driver needed here
                     title = self._get_webpage_title(url)
                 else:
                     logging.warning(
@@ -157,6 +282,7 @@ class TitleFetcher:
                 )
                 for i, item in enumerate(manual_queue):
                     print(f"\nProcessing manual item {i + 1}/{len(manual_queue)}...")
+                    # _get_title_manually will call _init_driver internally
                     manual_title = self._get_title_manually(item["url"])
                     # Place the manually entered title in the correct position in the list
                     titles[item["index"]] = manual_title
@@ -170,7 +296,5 @@ class TitleFetcher:
             return self.df
 
         finally:
-            # Ensure the driver is closed if it was initialized
-            if self.driver:
-                self.driver.quit()
-                logging.info("WebDriver has been closed.")
+            # Ensure the driver is closed and state is reset when the process is complete
+            self.close_driver()
