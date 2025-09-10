@@ -11,6 +11,12 @@ from langchain_community.llms import Ollama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
+# --- Future Work ---
+
+# TODO: synthesize webpage articles
+
+# --- Future Work ---
+
 # --- Basic Logging Configuration ---
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
