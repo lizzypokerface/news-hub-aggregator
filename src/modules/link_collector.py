@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Any, Dict, List
+from datetime import datetime, timedelta
 
 import pandas as pd
 from selenium import webdriver
@@ -103,6 +104,7 @@ class LinkCollector:
         return processed_records
 
     def collect_analysis_links(self) -> pd.DataFrame:
+        one_week_ago = datetime.now() - timedelta(days=7)
         all_collected_records = []
         analysis_sources = [s for s in self.sources if s.get("type") == "analysis"]
 
@@ -129,6 +131,7 @@ class LinkCollector:
             )
             print("3. Paste the links into the following file (one link per line):")
             print(f"   ==> {os.path.abspath(self.raw_links_path)}")
+            print(f"Date One Week Ago: {one_week_ago.strftime('%d/%m/%y')}")
             print("=" * 80)
 
             self.driver.get(source["url"])
