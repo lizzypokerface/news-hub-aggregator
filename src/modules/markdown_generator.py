@@ -15,12 +15,12 @@ REGION_HEADINGS = {
     "South Asia": "South Asia",
     "Central Asia": "Central Asia",
     "Russia": "Russia",
-    "Oceania": "Oceania",
-    "West Asia (Middle East)": "Middle East (West Asia)",  # Mapping data value to desired heading
+    "West Asia (Middle East)": "West Asia (Middle East)",  # Mapping data value to desired heading
     "Africa": "Africa",
     "Europe": "Europe",
     "Latin America & Caribbean": "Latin America & Caribbean",
     "North America": "North America",
+    "Oceania": "Oceania",
     "Unknown": "Unknown",
 }
 
