@@ -5,9 +5,8 @@ from datetime import datetime
 import pandas as pd
 
 # --- Import Custom Modules ---
-# Assume these modules are in the same directory or a reachable path
-from config_manager import ConfigManager
-from content_summarizer import ContentSummarizer
+from modules.config_manager import ConfigManager
+from modules.content_summarizer import ContentSummarizer
 
 
 def sanitize_filename(name: str) -> str:

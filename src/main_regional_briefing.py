@@ -3,9 +3,9 @@ import os
 from datetime import datetime
 
 # --- Import Custom Modules ---
-from config_manager import ConfigManager
-from headline_synthesizer import HeadlineSynthesizer
-from regional_summariser import RegionalSummariser
+from modules.config_manager import ConfigManager
+from modules.headline_synthesizer import HeadlineSynthesizer
+from modules.regional_summariser import RegionalSummariser
 
 # --- Basic Logging Configuration ---
 logging.basicConfig(

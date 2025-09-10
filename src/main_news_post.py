@@ -1,11 +1,11 @@
 import os
 import logging
 from datetime import datetime
-from config_manager import ConfigManager
-from link_collector import LinkCollector
-from title_fetcher import TitleFetcher
-from region_categoriser import RegionCategorizer
-from markdown_generator import MarkdownGenerator
+from modules.config_manager import ConfigManager
+from modules.link_collector import LinkCollector
+from modules.title_fetcher import TitleFetcher
+from modules.region_categoriser import RegionCategorizer
+from modules.markdown_generator import MarkdownGenerator
 
 
 if __name__ == "__main__":
