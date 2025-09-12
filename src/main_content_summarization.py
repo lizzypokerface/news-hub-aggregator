@@ -126,7 +126,7 @@ def main():
 
                 article_block = (
                     f"## {title} | {region}\n"
-                    f"({format}: {url})\n\n"
+                    f"{format}: {url}\n\n"
                     f"{summary_text}\n"
                 )
                 markdown_blocks.append(article_block)
