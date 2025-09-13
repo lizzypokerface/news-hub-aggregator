@@ -174,7 +174,7 @@ class TitleFetcher:
     def _get_youtube_title(self, url: str) -> Optional[str]:
         """Fetches a YouTube video title using Selenium."""
         # Ensure the driver is ready and assigned to self.driver
-        self.driver = self._init_driver(headless=True)
+        self.driver = self._init_driver()
         logging.info(f"Fetching YouTube title for: {url}")
         try:
             self.driver.get(url)
