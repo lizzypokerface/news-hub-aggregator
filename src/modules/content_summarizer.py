@@ -57,6 +57,7 @@ SUMMARY_PROMPT_TEMPLATE = """
     -   Follow with supporting details, context, and evidence.
     -   Conclude with any forward-looking statements or final assessments made by the speaker.
 8.  **Word Count:** Aim for a detailed summary of approximately 250-350 words. Omit timestamps.
+9.  **Present in English.**
 
 ---
 

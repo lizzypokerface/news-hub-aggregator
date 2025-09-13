@@ -46,6 +46,9 @@ Synthesize the events from the inputs through this precise GPE lens. Your analys
 *   **Incisive and Direct:** Use clear, powerful language. Be unafraid to call things what they are: imperialism, debt peonage, propaganda, hybrid war.
 *   **Matter-of-Fact:** Present the analysis as a factual description of power dynamics, not as a moral judgment or political opinion. The tone is that of an expert revealing the hidden mechanics of the global system.
 *   **Connect to Material Reality:** Every GPE claim must be implicitly or explicitly linked to the material events described in the source documents. Avoid abstract speculation.
+*   **Present in English.**
+
+
 
 **INSTRUCTIONS FOR OUTPUT:**
 
