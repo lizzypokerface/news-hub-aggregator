@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from datetime import datetime
 import pandas as pd
 
@@ -27,7 +28,7 @@ REGION_HEADINGS = {
 # YAML Front Matter and basic structure for the Markdown post
 NEWS_POST_TEMPLATE = """---
 layout: post
-title:  "✊ Progressive News | {date_display}"
+title:  🌏 Global Briefing | {date_display}"
 date:   {date_str} 08:00:00 +0800
 categories: weekly news
 ---
@@ -61,10 +62,15 @@ class MarkdownGenerator:
             self.output_directory, f"{date_str}-weekly-news.md"
         )
 
+    def _tidy_title(self, title: str) -> str:
+        # Remove characters that break markdown
+        tidy = re.sub(r"[\|\[\]]", " ", title)
+        return tidy
+
     def _format_article_line(self, row: pd.Series) -> str:
         """Formats a single article row into the required Markdown string."""
         # Example: * [`The China Academy` How Does China’s System Really Work?](url)
-        return f"* [`{row['source']}` {row['title']}]({row['url']})"
+        return f"* [`{row['source']}` {self._tidy_title(row['title'])}]({row['url']})"
 
     def generate_markdown_post(self) -> None:
         """
