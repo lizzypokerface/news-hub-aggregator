@@ -28,7 +28,7 @@ REGION_HEADINGS = {
 # YAML Front Matter and basic structure for the Markdown post
 NEWS_POST_TEMPLATE = """---
 layout: post
-title:  🌏 Global Briefing | {date_display}"
+title:  🌏 Global Briefing | {date_display}
 date:   {date_str} 08:00:00 +0800
 categories: weekly news
 ---
