@@ -65,7 +65,7 @@ class RegionCategorizer:
     Categorizes articles into geographic regions using an Ollama LLM.
     """
 
-    def __init__(self, input_df: pd.DataFrame, model: str = "qwen2.5:14b"):
+    def __init__(self, input_df: pd.DataFrame, model: str = "qwen2.5:32b"):
         """
         Initializes the categorizer and sets up the LangChain connection.
 
