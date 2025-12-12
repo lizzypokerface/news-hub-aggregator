@@ -34,52 +34,35 @@ MINIMUM_CONTENT_LENGTH = (
     150  # Minimum characters for any content to be considered valid for summarization
 )
 SUMMARY_PROMPT_TEMPLATE = """
-**Role:** You are an intelligence analyst and news reporter.
+**Role:** You are an elite Intelligence Analyst processing raw source documents for a high-level decision-maker.
 
-**Task:** Your task is to create a detailed, journalistic summary of the provided document. The summary should be written as a news report or an intelligence briefing, designed to inform a reader about the current situation, key claims, and important figures involved.
+**Objective:** Create a "Triage Card" that allows the user to instantly assess the document's value, tone, and critical intel without reading the full text.
 
-**Audience:** The summary is for a well-informed reader who needs a quick but thorough understanding of the key events, claims, and dynamics discussed in the text.
+**Constraints:**
+1.  **Input:** You will process ONE document at a time.
+2.  **Brevity:** The final output must be readable in under 60 seconds.
+3.  **Structure:** Follow the exact "Output Format" below. Do not deviate.
+4.  **Implications:** Every point must include a *forward-looking* implication (what happens next?), not just a summary of the past.
 
-**Key Requirements for Your Summary:**
+**Output Format:**
 
-1.  **Journalistic Style:** Begin the summary with a dateline (e.g., "**City, Country --**") and write in a clear, objective, and professional news style.
-2.  **Strict Attribution:** Attribute all claims, opinions, and predictions directly to the speaker(s) mentioned in the text. Use phrases like "According to [Speaker's Name]," "[Speaker] stated that," or "[Speaker] claims." Never present an opinion from the text as an established fact.
-3.  **Extract Key Facts:** Identify and include all critical factual information:
-    -   **People:** Full names and their titles/roles (e.g., "Seyed Mohammad Marandi, a professor at Tehran University").
-    -   **Organizations:** Names of government bodies, agencies, or groups (e.g., "IAEA," "Supreme National Security Council").
-    -   **Locations:** Important cities, countries, or regions mentioned (e.g., "Gaza," "Tehran," "Beijing").
-    -   **Specific Events:** Mention key events discussed, such as "US and Israeli strikes," "a military parade in Beijing," or "sanctions."
-4.  **Summarize the Core Thesis:** Clearly state the central argument of the speaker. What is the main point they are trying to convey?
-5.  **Include Supporting Evidence:** Mention the key pieces of evidence or examples the speaker uses to support their main points.
-6.  **Capture Critical Statements:** Incorporate direct quotes or precise paraphrases of the most important statements, especially any warnings, policy shifts, or significant declarations.
-7.  **Logical Structure:**
-    -   Start with the most important information (the lead).
-    -   Follow with supporting details, context, and evidence.
-    -   Conclude with any forward-looking statements or final assessments made by the speaker.
-8.  **Word Count:** Aim for a detailed summary of approximately 250-350 words. Omit timestamps.
-9.  **Present in English.**
+**Triage Tags**
+* **Type:** [Choose one: Strategic Analysis / Battlefield Report / Economic Forecast / Historical Context / Opinion / News Report]
+* **Region:** [Primary region discussed]
+* **Sentiment:** [Choose one: Optimistic / Cautiously Optimistic / Neutral / Critical / Alarmist]
+* **Key Entities:** [List top 3-4 specific people, organizations, or places mentioned]
 
----
+**5-Point Intel Brief**
+* **[HEADLINE 1 in Bold]:** [The core fact or claim].
+    * *Implication:* [One sentence prediction: What happens next because of this? What is the consequence?]
 
-### **Examples to Guide You:**
+* **[HEADLINE 2 in Bold]:** ...
+    * *Implication:* ...
 
-Let's use the provided transcript about Professor Marandi as our source text.
+(Repeat for max 5 points. If the document is short or low-signal, use fewer than 5 points. Never invent points.)
 
-**Bad Example (What to AVOID):**
-
-> "Professor Marandi talked about the situation in the Middle East. He said Iran wasn't really hurt by the attacks and that they are being ambiguous about their nuclear program now. He thinks Iran is stronger and has better friends, so they are more prepared for a war."
-> -   **Why it's bad:** This summary is too generic. It lacks names, titles, specific evidence, attribution, and the professional tone of a news report.
-
-**Good Example (What to AIM FOR):**
-
-> "Tehran, Iran -- According to Seyed Mohammad Marandi, a professor at Tehran University, recent US and Israeli strikes failed to damage Iran's nuclear program, prompting Tehran to adopt a policy of 'strategic ambiguity.' Marandi claims key facilities are deep underground and that Iran retains a strong industrial base for producing advanced centrifuges. A major consequence, he stated, is Iran's decision to cease most cooperation with the IAEA. He highlighted a warning from Dr. Jani, head of Iran's Supreme National Security Council, that Iran's 'nuclear posture will change' if its existence is threatened. Marandi concluded that Iran's geopolitical position is strengthening through deeper ties with China and Russia, making it more prepared for any future conflict."
-> -   **Why it's good:** It uses a dateline, attributes every claim, includes names and titles (Marandi, Dr. Jani), mentions key organizations (IAEA), quotes a critical warning, and follows a logical news structure.
-
----
-
-**Now, using the rules and examples above, process the following document:**
-
-`{content}`
+**Document Content:**
+{content}
 """
 
 # ---  HELPER FUNCTIONS  ---
