@@ -53,19 +53,15 @@ def main():
         # ----------------------------------------
 
         # Stage A: Regional Briefing (YouTube/Poe Synthesis)
-        # Originally main_regional_briefing.py
         aggregator.generate_regional_briefing()
 
         # Stage B: News ETL (Link Collection -> Titles -> Regions)
-        # Originally main_news_post.py (Phases 1-3)
         aggregator.run_news_etl()
 
         # Stage C: Content Summarization (Detailed summaries of specific sources)
-        # Originally main_content_summarization.py (Depends on Stage B output)
         aggregator.generate_content_summarization()
 
         # Stage D: News Post Construction (Final Markdown generation)
-        # Originally main_news_post.py (Phase 4)
         aggregator.construct_news_post()
 
         logger.info("=== Global News Aggregation Workflow Completed Successfully ===")

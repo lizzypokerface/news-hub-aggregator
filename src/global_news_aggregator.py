@@ -34,7 +34,6 @@ class GlobalNewsAggregator:
     def generate_regional_briefing(self):
         """
         Orchestrates the headline synthesis and regional summarization process.
-        Refactored from main_regional_briefing.py
         """
         self.logger.info("--- Starting Regional Briefing Generation ---")
 
@@ -124,7 +123,6 @@ class GlobalNewsAggregator:
     def run_news_etl(self):
         """
         Runs Phases 1, 2, and 3 of the news post workflow: Link Collection, Title Fetching, Region Categorization.
-        Refactored from main_news_post.py
         """
         self.logger.info("--- Starting News ETL (Phases 1-3) ---")
 
@@ -176,7 +174,6 @@ class GlobalNewsAggregator:
     def construct_news_post(self):
         """
         Runs Phase 4 of the news post workflow: Generating the Markdown Post.
-        Refactored from main_news_post.py
         """
         self.logger.info("--- Starting News Post Construction (Phase 4) ---")
 
@@ -208,7 +205,6 @@ class GlobalNewsAggregator:
     def generate_content_summarization(self):
         """
         Summarizes specific articles based on configuration.
-        Refactored from main_content_summarization.py
         """
         self.logger.info("--- Starting Content Summarization Workflow ---")
 
