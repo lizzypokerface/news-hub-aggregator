@@ -26,6 +26,12 @@ You are a critical political economy and geopolitical analyst, inspired by the f
 ### INSTRUCTIONS
 Analyze the provided "Raw Research Transcripts" below and produce a comprehensive, structured report following the format below.
 
+**CRITICAL CONSTRAINTS:**
+1. The "EXAMPLE OUTPUT FORMAT" provided below is for **structural reference ONLY**.
+2. Do **NOT** use the content (e.g., specific country names or events) from the example in your final output unless they appear in your transcripts.
+3. Your analysis must be based **STRICTLY** on the "RAW RESEARCH TRANSCRIPTS" provided at the end.
+4. If the transcripts cover only one country, adapt the structure to focus solely on that country. If they cover two, use the comparative format.
+
 ### REPORT STRUCTURE
 
 1. Executive Summary
@@ -66,11 +72,11 @@ Analyze the provided "Raw Research Transcripts" below and produce a comprehensiv
 - If analyzing two countries, compare and contrast throughout, especially in summary and analytical sections
 - Keep sections clear and focused for database entry suitability
 
-### EXAMPLE OUTPUT FORMAT
+### EXAMPLE OUTPUT FORMAT (TEMPLATE)
 
-## Thailand & Cambodia: Executive Summary (2025)
+## [Country/Topic Name]: Executive Summary (Year)
 
-**Thailand and Cambodia are locked in a renewed border conflict rooted not only in colonial-era boundaries but also in the internal power struggles and class dynamics of each country. The Preah Vihear dispute, reignited in 2025, is both a legacy of imperialist cartography and a tool for elites on both sides to shore up legitimacy amid domestic crises. In Thailand, the military-monarchy alliance leverages nationalism and conflict to weaken civilian, populist forces, while in Cambodia, the ruling family uses the crisis to consolidate succession. Externally, the crisis exposes the region's vulnerability to great power maneuvering.**
+**[Synthesize key historical, class, power, and geopolitical dynamics here. Highlight important contradictions, conflict drivers, and material conditions. Focus on how history, class structure, imperialism, and external influences shape the present. Keep concise (maximum 200 words).]**
 
 ---
 
@@ -78,77 +84,75 @@ Analyze the provided "Raw Research Transcripts" below and produce a comprehensiv
 
 ### 1. Basic Data
 
-| | Thailand | Cambodia |
+| | [Country A] | [Country B (if applicable)] |
 | --- | --- | --- |
-| Capital | Bangkok | Phnom Penh |
-| Population | ~70 million | ~17 million |
-| Languages | Thai | Khmer |
-| Region | Southeast Asia | Southeast Asia |
+| Capital | [City Name] | [City Name] |
+| Population | [Number] | [Number] |
+| Languages | [Languages] | [Languages] |
+| Region | [Region] | [Region] |
 
 ---
 
 ### 2. Pre-capitalist Foundations
-- **Thailand:** Feudal monarchy, successor to Tai and Siamese kingdoms, never colonized, tributary relationships.
-- **Cambodia:** Center of the ancient Khmer Empire, Hindu-Buddhist civilization, agrarian village structure.
+- **[Country A]:** [Analyze ancient societies, modes of production, and early power structures.]
+- **[Country B]:** [Analyze ancient societies, modes of production, and early power structures.]
 
 ---
 
 ### 3. Colonialism, Imperialism, and State Formation
-- **Thailand:** Maintained independence but ceded territory under British and French pressure; borders shaped by colonial negotiation.
-- **Cambodia:** French colony; borders defined by colonial authorities, setting stage for later disputes; independence in 1953.
+- **[Country A]:** [Analyze colonial experience, borders, independence, and state-building.]
+- **[Country B]:** [Analyze colonial experience, borders, independence, and state-building.]
 
 ---
 
 ### 4. Class Structure and Social Forces
-- **Thailand:** Power triangle—monarchy, military, and weak civilian government; populist bourgeois force; persistent rural-urban divisions.
-- **Cambodia:** One-party rule, dynastic family control, party-military alliance; legacy of peasantry and trauma from Khmer Rouge era.
+- **[Country A]:** [Analyze main social classes, elites, popular movements, and their evolution.]
+- **[Country B]:** [Analyze main social classes, elites, popular movements, and their evolution.]
 
 ---
 
 ### 5. Economic Development and Structural Change
-- **Thailand:** East Asian industrialization path, large manufacturing sector, significant inequality, growing financialization.
-- **Cambodia:** Dependent on garment exports, agriculture, foreign investment (China, Vietnam); high informality and poverty.
+- **[Country A]:** [Analyze key phases (agrarian, industrial, financial), dependencies, and transformations.]
+- **[Country B]:** [Analyze key phases (agrarian, industrial, financial), dependencies, and transformations.]
 
 ---
 
 ### 6. Imperialism, Neocolonialism, and External Relations
-- **Thailand:** US military ally, now leaning toward BRICS and China for geoeconomic alternatives; balancing major powers.
-- **Cambodia:** Dependency on Chinese capital and Vietnamese political influence; history as Cold War proxy.
+- **[Country A]:** [Analyze historical and current external domination, alliances, and dependencies.]
+- **[Country B]:** [Analyze historical and current external domination, alliances, and dependencies.]
 
 ---
 
 ### 7. Political Power Structure
-- **Thailand:** Military-monarchy dominance, frequent coups, populist parties marginalized; civilian government fragile.
-- **Cambodia:** Party and family control, dynastic succession, weak but symbolic monarchy, centralized authority.
+- **[Country A]:** [Analyze main forms of rule, institutions, and factional struggles.]
+- **[Country B]:** [Analyze main forms of rule, institutions, and factional struggles.]
 
 ---
 
 ### 8. Material Conditions and Social Indicators
-- **Thailand:** Urban-rural inequality, advanced infrastructure in cities, large informal and migrant labor sector.
-- **Cambodia:** Rural poverty, poor infrastructure, dependence on remittances, rapid urbanization.
+- **[Country A]:** [Analyze inequality, labor, infrastructure, poverty, living standards.]
+- **[Country B]:** [Analyze inequality, labor, infrastructure, poverty, living standards.]
 
 ---
 
 ### 9. Current Contradictions and Structural Issues
-- **Thailand:** Elite infighting, class polarization, instability in civilian rule, growing external vulnerabilities.
-- **Cambodia:** Dynastic transition, elite capture, economic dependency, vulnerability to regional shocks.
+- **[Country A]:** [Analyze ongoing crises, class conflict, external shocks, or contradictions.]
+- **[Country B]:** [Analyze ongoing crises, class conflict, external shocks, or contradictions.]
 
 ---
 
 ### 10. Recent Developments and Trends
-- **Shared:**
-    - 2025 border conflict escalation.
-    - Dynastic drama and nationalist mobilization.
-    - Humanitarian displacement.
-    - BRICS expansion and regional realignment.
+- **Shared/Individual:**
+    - [Event 1]
+    - [Event 2]
+    - [Trend 1]
 
 ---
 
 ### 11. Analytical Notes (Marxist/Geopolitical Perspective)
-- **Colonial Borders as Trigger:** The dispute is a classic example of imperialist legacy shaping present antagonisms.
-- **Elite Strategy:** Both sides use the crisis to mobilize nationalist sentiment, diverting attention from internal contradictions.
-- **Material Contradictions:** Conflict disrupts deep economic ties; working classes suffer, while elites maneuver for advantage.
-- **Multipolarity:** Thailand's BRICS move and Cambodia's reliance on China reflect broader shifts away from Western dominance.
+- **[Key Concept 1]:** [Critical assessment of world-system position.]
+- **[Key Concept 2]:** [Historical legacies and class dynamics.]
+- **[Key Concept 3]:** [Alternative paths or future outlook.]
 
 ### END OF EXAMPLE
 
@@ -185,7 +189,7 @@ class HistoricalMaterialistResearcher:
         self,
         manual_review: bool = True,
         provider: str = "poe",
-        model: str = "Gemini-2.5-Pro",
+        model: str = "Gemini-3-Pro",
     ) -> None:
         """
         Public Orchestrator: Runs the full research pipeline.
