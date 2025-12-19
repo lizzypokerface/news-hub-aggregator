@@ -58,10 +58,7 @@ def main():
         # Stage B: News ETL (Link Collection -> Titles -> Regions)
         aggregator.run_news_etl()
 
-        # Stage C: Content Summarization (Detailed summaries of specific sources)
-        aggregator.generate_content_summarization()
-
-        # Stage D: News Post Construction (Final Markdown generation)
+        # Stage C: News Post Construction (Final Markdown generation)
         aggregator.construct_news_post()
 
         logger.info("=== Global News Aggregation Workflow Completed Successfully ===")
