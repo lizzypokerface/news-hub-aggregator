@@ -189,7 +189,7 @@ class HistoricalMaterialistResearcher:
         self,
         manual_review: bool = True,
         provider: str = "poe",
-        model: str = "Gemini-3-Pro",
+        model: str = "Gemini-2.5-Pro",
     ) -> None:
         """
         Public Orchestrator: Runs the full research pipeline.
