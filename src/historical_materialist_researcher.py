@@ -1,14 +1,25 @@
 import os
 import logging
+import re
 from datetime import datetime
+from typing import List
 from modules.content_extractor import ContentExtractor
 from modules.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
-# The detailed prompt template for Historical Materialist Analysis
+# --- PROMPT TEMPLATES ---
 
-HISTORICAL_MATERIALIST_ANALYSIS_PROMPT = """
+TITLE_GENERATION_PROMPT = """
+You are an editor. Read the following analysis and generate a short, descriptive title (maximum 8 words).
+The title must be concise and specific to the content (e.g., "Thailand-Cambodia Border Conflict 2025").
+Do not use colons, slashes, or special characters. Do not use Markdown. Just return the plain text title.
+
+ANALYSIS TEXT:
+{analysis_text}
+"""
+
+HMA_PROMPT = """
 ### OVERVIEW
 You are a critical political economy and geopolitical analyst, inspired by the frameworks of Michael Hudson, Radhika Desai, and Ben Norton.
 
@@ -148,10 +159,7 @@ Analyze the provided "Raw Research Transcripts" below and produce a comprehensiv
 
 class HistoricalMaterialistResearcher:
     """
-    Orchestrates the targeted research workflow:
-    1. Compiling raw transcripts from links.
-    2. (Optional) Pausing for manual user review.
-    3. Generating a Historical Materialist analysis via LLM.
+    Orchestrates the targeted research workflow.
     """
 
     def __init__(
@@ -163,10 +171,13 @@ class HistoricalMaterialistResearcher:
         self.input_file = os.path.join(input_directory, "research_links.txt")
         self.output_directory = output_directory
 
-        # State variable to hold the path of the current work in progress
+        # --- State Variables ---
         self.current_transcripts_path = None
+        self.research_links: List[
+            str
+        ] = []  # Stores links in memory to avoid re-reading files
 
-        # Initialize helpers
+        # --- Helpers ---
         self.extractor = ContentExtractor()
         self.llm = LLMClient(config)
 
@@ -178,16 +189,10 @@ class HistoricalMaterialistResearcher:
     ) -> None:
         """
         Public Orchestrator: Runs the full research pipeline.
-
-        Args:
-            manual_review (bool): If True, pauses execution after compilation to allow
-                                  the user to edit the markdown file before analysis.
-            provider (str): The LLM provider to use.
-            model (str): The model name to use.
         """
         logger.info("=== Starting Historical Materialist Research Workflow ===")
 
-        # Step 1: Compile Materials
+        # Step 1: Compile Materials (Populates self.research_links)
         self._compile_research_material()
 
         if not self.current_transcripts_path:
@@ -204,15 +209,14 @@ class HistoricalMaterialistResearcher:
             input("Press Enter when you are ready to proceed to Analysis... ")
             logger.info("Resuming workflow after manual review.")
 
-        # Step 3: Generate Analysis
+        # Step 3: Generate Analysis (Uses self.research_links for citations)
         self._generate_analysis(provider=provider, model=model)
 
         logger.info("=== Research Workflow Complete ===")
 
     def _compile_research_material(self) -> str:
         """
-        Internal: Reads links, fetches content, and compiles to Markdown.
-        Updates self.current_transcripts_path.
+        Internal: Reads links into memory, fetches content, and compiles to Markdown.
         """
         logger.info("--- Phase 1: Compiling Research Material ---")
 
@@ -220,19 +224,24 @@ class HistoricalMaterialistResearcher:
             logger.error(f"Input file not found: {self.input_file}")
             return ""
 
+        # 1. Read links into Class Variable
         with open(self.input_file) as f:
-            links = [line.strip() for line in f if line.strip()]
+            # Store cleaned links in self.research_links
+            self.research_links = [line.strip() for line in f if line.strip()]
 
-        if not links:
+        if not self.research_links:
             logger.warning("No links found in research_links.txt.")
             return ""
 
+        logger.info(f"Loaded {len(self.research_links)} links into memory.")
+
+        # 2. Extract Content
         compiled_content = (
             f"# Raw Research Transcripts | {datetime.now().strftime('%Y-%m-%d')}\n\n"
         )
 
-        for index, url in enumerate(links):
-            logger.info(f"Processing ({index+1}/{len(links)}): {url}")
+        for index, url in enumerate(self.research_links):
+            logger.info(f"Processing ({index+1}/{len(self.research_links)}): {url}")
             try:
                 text_content = self.extractor.get_text(url)
                 compiled_content += f"## Source {index+1}: {url}\n{'-'*40}\n{text_content}\n{'-'*40}\n\n"
@@ -242,6 +251,7 @@ class HistoricalMaterialistResearcher:
                     f"## Source {index+1}: {url}\n[FAILED TO RETRIEVE CONTENT]\n\n"
                 )
 
+        # 3. Save Output
         date_str = datetime.now().strftime("%Y-%m-%d")
         os.makedirs(self.output_directory, exist_ok=True)
         output_filename = f"{date_str}_raw_transcripts.md"
@@ -251,14 +261,18 @@ class HistoricalMaterialistResearcher:
             f.write(compiled_content)
 
         logger.info(f"Transcripts saved to: {output_path}")
-
-        # Update State
         self.current_transcripts_path = output_path
         return output_path
 
+    def _sanitize_filename(self, name: str) -> str:
+        """Removes illegal characters for filenames."""
+        name = re.sub(r"[^\w\s-]", "", name)
+        name = re.sub(r"[-\s]+", "_", name)
+        return name.strip()
+
     def _generate_analysis(self, provider: str, model: str) -> str:
         """
-        Internal: Reads the file at self.current_transcripts_path and generates analysis.
+        Internal: Uses in-memory links and transcript file to generate final analysis.
         """
         logger.info("--- Phase 2: Generating Analysis ---")
 
@@ -268,14 +282,15 @@ class HistoricalMaterialistResearcher:
             logger.error("No transcript file found to analyze.")
             return ""
 
+        # Read the (potentially edited) transcript file
         with open(self.current_transcripts_path, encoding="utf-8") as f:
             raw_content = f.read()
 
-        full_prompt = HISTORICAL_MATERIALIST_ANALYSIS_PROMPT.format(
-            transcripts=raw_content
-        )
+        # --- A. Generate Main Analysis ---
+        full_prompt = HMA_PROMPT.format(transcripts=raw_content)
 
         try:
+            logger.info(f"Querying {provider} ({model}) for analysis...")
             analysis_text = self.llm.query(
                 prompt=full_prompt, provider=provider, model=model
             )
@@ -283,12 +298,38 @@ class HistoricalMaterialistResearcher:
             logger.error(f"Analysis generation failed: {e}")
             return ""
 
+        # --- B. Generate Title ---
+        logger.info("Generating title for the analysis...")
+        title_prompt = TITLE_GENERATION_PROMPT.format(
+            analysis_text=analysis_text[:5000]
+        )
+
+        try:
+            raw_title = self.llm.query(
+                prompt=title_prompt, provider=provider, model="GPT-4o"
+            )
+            sanitized_title = self._sanitize_filename(raw_title)
+        except Exception as e:
+            logger.warning(f"Title generation failed: {e}. Using default.")
+            raw_title = "Historical Materialist Analysis"
+            sanitized_title = "analysis"
+
+        # --- C. Append Sources (From Class Variable) ---
+        sources_section = ""
+        if self.research_links:
+            sources_section = "\n\n---\n### Sources\n"
+            for link in self.research_links:
+                sources_section += f"- {link}\n"
+
+        # --- D. Final Assembly & Save ---
+        final_content = f"# {raw_title}\n\n{analysis_text}{sources_section}"
+
         date_str = datetime.now().strftime("%Y-%m-%d")
-        output_filename = f"{date_str}_historical_materialist_analysis.md"
+        output_filename = f"{date_str}-hma-{sanitized_title}.md"
         output_path = os.path.join(self.output_directory, output_filename)
 
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(analysis_text)
+            f.write(final_content)
 
         logger.info(f"Analysis saved to: {output_path}")
         return output_path
