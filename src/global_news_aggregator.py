@@ -5,7 +5,6 @@ from datetime import datetime
 import pandas as pd
 
 # --- Import Custom Modules ---
-from modules.content_summarizer import ContentSummarizer
 from modules.headline_synthesizer import HeadlineSynthesizer
 from modules.regional_summariser import RegionalSummariser
 from modules.link_collector import LinkCollector
@@ -201,97 +200,3 @@ class GlobalNewsAggregator:
 
         except Exception as e:
             self.logger.error(f"Error in construct_news_post: {e}", exc_info=True)
-
-    def generate_content_summarization(self):
-        """
-        Summarizes specific articles based on configuration.
-        """
-        self.logger.info("--- Starting Content Summarization Workflow ---")
-
-        try:
-            poe_api_key = self.config.get("api_keys", {}).get("poe_api")
-            sources_to_summarize = self.config.get("summarise", [])
-
-            # Validation
-            if not poe_api_key:
-                self.logger.error("Poe API key ('poe_api') not found in config.")
-                return
-            if not sources_to_summarize:
-                self.logger.warning("No sources listed under 'summarise' in config.")
-                return
-
-            # Setup Output Directory for Summaries
-            date_str = datetime.now().strftime("%Y-%m-%d")
-            final_output_dir = os.path.join(self.output_dir, f"summaries_{date_str}")
-            os.makedirs(final_output_dir, exist_ok=True)
-            self.logger.info(f"Summaries will be saved to: {final_output_dir}")
-
-            # Load Data (Hand-off from ETL)
-            input_csv_path = os.path.join(
-                self.output_dir, "p3_articles_with_regions.csv"
-            )
-            if not os.path.exists(input_csv_path):
-                self.logger.error(
-                    f"Input file not found: {input_csv_path}. Run ETL first."
-                )
-                return
-
-            df = pd.read_csv(input_csv_path)
-            filtered_df = df[df["source"].isin(sources_to_summarize)].copy()
-
-            if filtered_df.empty:
-                self.logger.warning("No articles found matching sources to summarize.")
-                return
-
-            filtered_df.sort_values(by="source", ascending=True, inplace=True)
-            self.logger.info(f"Found {len(filtered_df)} articles to summarize.")
-
-            # Initialize Summarizer
-            summarizer = ContentSummarizer(poe_api_key=poe_api_key)
-
-            # Process by Source
-            for source_name, group in filtered_df.groupby("source"):
-                self.logger.info(f"Processing Source for Summaries: {source_name}")
-                markdown_blocks = [f"# {source_name}\n"]
-
-                for _, row in group.iterrows():
-                    title, url, region, fmt = (
-                        row["title"],
-                        row["url"],
-                        row["region"],
-                        row["format"],
-                    )
-                    self.logger.info(f"Summarizing: '{title}'")
-
-                    summary_text = summarizer.summarize(
-                        source_name=source_name, url=url
-                    )
-
-                    # Graceful Failure
-                    if summary_text.strip().startswith("Error:"):
-                        self.logger.warning(
-                            f"Failed to summarize '{title}'. Using fallback."
-                        )
-                        summary_text = "Could not retrieve summary. Please visit the link directly."
-
-                    article_block = (
-                        f"## {title} | {region}\n{fmt}: {url}\n\n{summary_text}\n"
-                    )
-                    markdown_blocks.append(article_block)
-
-                # Write Source File
-                final_content = "\n---\n".join(markdown_blocks)
-                sanitized_name = self._sanitize_filename(source_name)
-                output_filename = f"{sanitized_name}-{date_str}.md"
-                output_path = os.path.join(final_output_dir, output_filename)
-
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(final_content)
-                self.logger.info(f"Summary written to {output_path}")
-
-            self.logger.info("--- Content Summarization Workflow Complete ---")
-
-        except Exception as e:
-            self.logger.critical(
-                f"Critical error in generate_content_summarization: {e}", exc_info=True
-            )

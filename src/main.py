@@ -5,16 +5,16 @@ import os
 # --- Import Custom Modules ---
 from modules.config_manager import ConfigManager
 from global_news_aggregator import GlobalNewsAggregator
+from historical_materialist_researcher import HistoricalMaterialistResearcher
 
 
 def main():
     """
-    Main entry point for the Global News Aggregation Workflow.
+    Main entry point for the Global Intelligence System.
     """
     # ----------------------------------------
     # 1. Setup Global Logging
     # ----------------------------------------
-    # This configuration will be used by all modules using logging.getLogger()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -23,18 +23,20 @@ def main():
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info("=== Starting Global News Aggregation Workflow ===")
+        logger.info("=== Starting Global Intelligence System ===")
 
         # ----------------------------------------
         # 2. Load Configuration
         # ----------------------------------------
-
-        config_path = "../config.yaml"
-
-        if not os.path.exists("../config.yaml"):
-            raise FileNotFoundError(
-                "Could not find config.yaml in current or parent directory."
-            )
+        # Check current and parent directory for config
+        config_path = "config.yaml"
+        if not os.path.exists(config_path):
+            if os.path.exists("../config.yaml"):
+                config_path = "../config.yaml"
+            else:
+                raise FileNotFoundError(
+                    "Could not find config.yaml in current or parent directory."
+                )
 
         logger.info(f"Loading configuration from {config_path}...")
         config_manager = ConfigManager(config_path)
@@ -44,27 +46,72 @@ def main():
             raise ValueError("Configuration is empty or could not be loaded.")
 
         # ----------------------------------------
-        # 3. Initialize Aggregator
+        # 3. User Selection Interface
         # ----------------------------------------
-        aggregator = GlobalNewsAggregator(config)
+        print("\n" + "=" * 50)
+        print(" NEWSHUB: GLOBAL INTELLIGENCE")
+        print("=" * 50)
+        print("1. Generate Weekly News Post (ETL + Regional Briefing)")
+        print("2. Perform Targeted Research (Historical Materialist Analysis)")
+        print("=" * 50)
+
+        choice = input("Select Mode (1 or 2): ").strip()
 
         # ----------------------------------------
-        # 4. Execute Workflow Stages
+        # 4. Execute Selected Workflow
         # ----------------------------------------
 
-        # Stage A: Regional Briefing (YouTube/Poe Synthesis)
-        aggregator.generate_regional_briefing()
+        if choice == "1":
+            logger.info("Mode Selected: Weekly News Post Generation")
+            aggregator = GlobalNewsAggregator(config)
 
-        # Stage B: News ETL (Link Collection -> Titles -> Regions)
-        aggregator.run_news_etl()
+            # Stage A: Regional Briefing (YouTube/Poe Synthesis)
+            aggregator.generate_regional_briefing()
 
-        # Stage C: Content Summarization (Detailed summaries of specific sources)
-        aggregator.generate_content_summarization()
+            # Stage B: News ETL (Link Collection -> Titles -> Regions)
+            aggregator.run_news_etl()
 
-        # Stage D: News Post Construction (Final Markdown generation)
-        aggregator.construct_news_post()
+            # Stage C: News Post Construction (Final Markdown generation)
+            aggregator.construct_news_post()
 
-        logger.info("=== Global News Aggregation Workflow Completed Successfully ===")
+            logger.info("Weekly News Workflow Completed Successfully.")
+
+        elif choice == "2":
+            logger.info("Mode Selected: Targeted Research")
+
+            # Check for input file existence before starting
+            input_dir = config.get("input_directory", "../inputs")
+            links_file = os.path.join(input_dir, "research_links.txt")
+
+            if not os.path.exists(links_file):
+                logger.warning(f"Research links file not found at: {links_file}")
+                create_new = (
+                    input("Create a new empty links file? (y/n): ").lower().strip()
+                )
+                if create_new == "y":
+                    os.makedirs(input_dir, exist_ok=True)
+                    with open(links_file, "w") as f:
+                        f.write("")  # Create empty file
+                    print(f"\nCreated {links_file}.")
+                    print(
+                        "Please paste your links into that file and restart the script."
+                    )
+                    return
+                else:
+                    logger.error("Cannot proceed without links file.")
+                    return
+
+            researcher = HistoricalMaterialistResearcher(config)
+
+            # Run the interactive research workflow
+            # manual_review=True allows you to edit the raw transcript file before analysis
+            researcher.conduct_research(manual_review=True)
+
+            logger.info("Targeted Research Workflow Completed Successfully.")
+
+        else:
+            logger.warning(f"Invalid selection: '{choice}'. Exiting.")
+            sys.exit(0)
 
     except FileNotFoundError as e:
         logger.error(f"File Error: {e}")
