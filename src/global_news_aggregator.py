@@ -127,21 +127,26 @@ class GlobalNewsAggregator:
 
         try:
             # Phase 1: Link Collection
+
+            # Define the persistence path
+            p1_path = os.path.join(self.output_dir, "p1_collected_analysis_links.csv")
+
+            # Phase 1: Link Collection
             collector = LinkCollector(
                 sources=self.config.get("sources", []),
                 input_directory=self.config.get("input_directory", "../inputs/"),
                 input_file="raw_links.txt",
+                persistence_path=p1_path,
             )
+
+            # This now returns the full DF, either newly collected or loaded from disk
             links_df = collector.collect_analysis_links()
 
             if links_df.empty:
                 self.logger.warning("No links collected. ETL stopping.")
                 return
 
-            os.makedirs(self.output_dir, exist_ok=True)
-            p1_path = os.path.join(self.output_dir, "p1_collected_analysis_links.csv")
-            links_df.to_csv(p1_path, index=False)
-            self.logger.info(f"Phase 1 Complete. Links saved to '{p1_path}'")
+            self.logger.info(f"Phase 1 Complete. Data available at '{p1_path}'")
 
             # Phase 2: Title Fetching
             self.logger.info("Starting Phase 2: Title Fetching")
