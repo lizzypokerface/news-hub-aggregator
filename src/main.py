@@ -2,7 +2,6 @@ import logging
 import sys
 import os
 
-# --- Import Custom Modules ---
 from modules.config_manager import ConfigManager
 from global_news_aggregator import GlobalNewsAggregator
 from historical_materialist_researcher import HistoricalMaterialistResearcher
@@ -51,22 +50,29 @@ def main():
         print("\n" + "=" * 50)
         print(" NEWSHUB: GLOBAL INTELLIGENCE")
         print("=" * 50)
-        print("1. Generate Weekly News Post (ETL + Regional Briefing)")
-        print("2. Perform Targeted Research (Historical Materialist Analysis)")
+        print("1. Generate Regional Briefing")
+        print("2. Generate Weekly News Post")
+        print("3. Perform Targeted Research (Deep Dive Analysis)")
         print("=" * 50)
 
-        choice = input("Select Mode (1 or 2): ").strip()
+        choice = input("Select Mode (1-3): ").strip()
 
         # ----------------------------------------
         # 4. Execute Selected Workflow
         # ----------------------------------------
 
         if choice == "1":
-            logger.info("Mode Selected: Weekly News Post Generation")
+            logger.info("Mode Selected: Regional Briefing Generation")
             aggregator = GlobalNewsAggregator(config)
 
-            # Stage A: Regional Briefing (YouTube/Poe Synthesis)
+            # Stage A: Regional Briefing only
             aggregator.generate_regional_briefing()
+
+            logger.info("Regional Briefing Workflow Completed.")
+
+        elif choice == "2":
+            logger.info("Mode Selected: Weekly News Post Generation")
+            aggregator = GlobalNewsAggregator(config)
 
             # Stage B: News ETL (Link Collection -> Titles -> Regions)
             aggregator.run_news_etl()
@@ -76,7 +82,7 @@ def main():
 
             logger.info("Weekly News Workflow Completed Successfully.")
 
-        elif choice == "2":
+        elif choice == "3":
             logger.info("Mode Selected: Targeted Research")
 
             # Check for input file existence before starting
