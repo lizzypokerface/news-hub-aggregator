@@ -12,7 +12,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
@@ -68,12 +67,12 @@ class ContentExtractor:
             driver.get(tactiq_base_url)
 
             # Interact with Tactiq input
-            url_input = WebDriverWait(driver, 20).until(
+            url_input = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.ID, "yt-2"))
             )
             url_input.send_keys(youtube_url)
 
-            btn = WebDriverWait(driver, 10).until(
+            btn = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, "//input[@value='Get Video Transcript']")
                 )
@@ -87,7 +86,7 @@ class ContentExtractor:
             )
 
             # Wait for text to appear
-            WebDriverWait(driver, 10).until(lambda d: container.text.strip() != "")
+            WebDriverWait(driver, 20).until(lambda d: container.text.strip() != "")
 
             # Cleanup text (remove timestamps)
             raw_text = container.text
@@ -112,7 +111,7 @@ class ContentExtractor:
             driver.get(url)
 
             # Wait for body text
-            WebDriverWait(driver, 20).until(
+            WebDriverWait(driver, 30).until(
                 lambda d: d.find_element(By.TAG_NAME, "body").text.strip() != ""
             )
 

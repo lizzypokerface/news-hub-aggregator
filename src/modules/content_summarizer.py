@@ -1,38 +1,15 @@
-# content_summarizer.py
-
 import logging
 import time
-import re
-from urllib.parse import urlparse, parse_qs
+from modules.content_extractor import ContentExtractor
+from modules.llm_client import LLMClient
 
-import openai
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.common.exceptions import (
-    WebDriverException,
-    TimeoutException,
-    NoSuchElementException,
-)
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from youtube_transcript_api import (
-    YouTubeTranscriptApi,
-    TranscriptsDisabled,
-    NoTranscriptFound,
-)
-
-# --- Basic Logging Configuration ---
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# --- Constants ---
-MINIMUM_CONTENT_LENGTH = (
-    150  # Minimum characters for any content to be considered valid for summarization
-)
+MINIMUM_CONTENT_LENGTH = 150
+
 SUMMARY_PROMPT_TEMPLATE = """
 **Role:** You are an elite Intelligence Analyst processing raw source documents for a high-level decision-maker.
 
@@ -56,331 +33,122 @@ SUMMARY_PROMPT_TEMPLATE = """
 * **[HEADLINE 1 in Bold]:** [The core fact or claim].
     * *Implication:* [One sentence prediction: What happens next because of this? What is the consequence?]
 
-* **[HEADLINE 2 in Bold]:** ...
-    * *Implication:* ...
-
 (Repeat for max 5 points. If the document is short or low-signal, use fewer than 5 points. Never invent points.)
 
 **Document Content:**
 {content}
 """
 
-# ---  HELPER FUNCTIONS  ---
-
-
-def _get_firefox_driver():
-    """Initializes and returns a headless Firefox WebDriver."""
-    options = FirefoxOptions()
-    options.add_argument("--headless")
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"
-    )
-    try:
-        driver = webdriver.Firefox(options=options)
-        return driver
-    except WebDriverException as e:
-        logger.error(
-            f"Failed to initialize Firefox WebDriver. Ensure geckodriver is in your PATH. Error: {e}"
-        )
-        raise
-
-
-def _clean_html_content(html_content: str) -> str:
-    """Cleans HTML content by extracting visible text and removing extra whitespace."""
-    soup = BeautifulSoup(html_content, "html.parser")
-    for script_or_style in soup(
-        ["script", "style", "noscript", "header", "footer", "nav", "aside"]
-    ):
-        script_or_style.decompose()
-    text = soup.get_text(separator=" ", strip=True)
-    text = re.sub(r"\s+", " ", text)
-    text = text.replace("\n", " ")
-    text = text.replace("\r", "")
-    return text.strip()
-
-
-def extract_transcript_youtube_api(youtube_url: str) -> str:
-    """Extracts the transcript of a YouTube video using the youtube-transcript-api library."""
-    logger.info(
-        f"Attempting to extract YouTube transcript via youtube-transcript-api for: {youtube_url}"
-    )
-    try:
-        parsed_url = urlparse(youtube_url)
-        video_id = None
-        if parsed_url.hostname in ["www.youtube.com", "youtube.com"]:
-            if parsed_url.path == "/watch":
-                video_id_qs = parse_qs(parsed_url.query).get("v")
-                if video_id_qs:
-                    video_id = video_id_qs[0]
-            elif parsed_url.path.startswith("/shorts/"):
-                video_id = parsed_url.path.split("/")[-1]
-        elif parsed_url.hostname == "youtu.be":
-            video_id = parsed_url.path.split("/")[-1]
-
-        if not video_id:
-            raise ValueError(f"Could not determine video ID from URL: {youtube_url}")
-
-        ytt_api = YouTubeTranscriptApi()
-        transcript_data = ytt_api.get_transcript(video_id)
-        transcript_text = " ".join([snippet["text"] for snippet in transcript_data])
-        logger.info(
-            f"Successfully extracted transcript for video ID: {video_id} using youtube-transcript-api."
-        )
-        return transcript_text
-    except (NoTranscriptFound, TranscriptsDisabled):
-        logger.warning(
-            f"No transcript found or transcripts are disabled for video: {youtube_url}."
-        )
-        return ""
-    except Exception as e:
-        logger.error(
-            f"An unexpected error occurred while fetching YouTube transcript via youtube-transcript-api for {youtube_url}: {e}"
-        )
-        return ""
-
-
-def extract_transcript_youtube_tactiq(youtube_url: str) -> str:
-    """Extracts the transcript of a YouTube video using Tactiq.io via Selenium with retries."""
-    logger.info(
-        f"Attempting to extract YouTube transcript via Tactiq.io for: {youtube_url}"
-    )
-    tactiq_base_url = "https://tactiq.io/tools/youtube-transcript"
-
-    max_retries = 2  # Total attempts: 1 initial + 2 retries
-    retry_delays = [1, 2]  # Delays in seconds for subsequent retries
-
-    cleaned_transcript_text = ""
-
-    for attempt in range(max_retries + 1):
-        driver = None
-        try:
-            logger.info(
-                f"Attempt {attempt + 1}/{max_retries + 1} to get transcript for {youtube_url}"
-            )
-            driver = _get_firefox_driver()
-            driver.get(tactiq_base_url)
-            logger.info(f"Navigated to Tactiq.io: {tactiq_base_url}")
-
-            url_input_field = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "yt-2"))
-            )
-            url_input_field.send_keys(youtube_url)
-
-            get_transcript_button = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//input[@value='Get Video Transcript']")
-                )
-            )
-            get_transcript_button.click()
-            logger.info("Clicked 'Get Video Transcript' button.")
-
-            # Wait for the URL to change, indicating the transcript page
-            WebDriverWait(driver, 20).until(EC.url_contains("run/youtube_transcript"))
-
-            # Wait for the transcript container to be present and then for its text to be non-empty
-            transcript_container = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.ID, "transcript"))
-            )
-            WebDriverWait(driver, 10).until(
-                lambda d: transcript_container.text.strip() != ""
-            )
-
-            raw_transcript_text = transcript_container.text
-            timestamp_pattern = r"\d{2}:\d{2}:\d{2}\.\d{3}\s*"
-            cleaned_transcript_text = re.sub(timestamp_pattern, "", raw_transcript_text)
-            logger.info("Timestamps removed from Tactiq.io transcript.")
-
-            if cleaned_transcript_text.strip():
-                logger.info(
-                    f"Successfully retrieved transcript on attempt {attempt + 1}."
-                )
-                return cleaned_transcript_text.strip()
-            else:
-                logger.warning(
-                    f"Transcript was empty on attempt {attempt + 1} for {youtube_url}."
-                )
-
-        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
-            logger.warning(
-                f"Attempt {attempt + 1} failed for {youtube_url} due to a Selenium error: {e}"
-            )
-        except Exception as e:
-            logger.error(
-                f"An unexpected error occurred during Tactiq.io transcript extraction on attempt {attempt + 1} for {youtube_url}: {e}"
-            )
-        finally:
-            if driver:
-                driver.quit()
-                logger.info(f"Driver quit for attempt {attempt + 1}.")
-
-        if attempt < max_retries:
-            delay = retry_delays[attempt]
-            logger.info(f"Retrying in {delay} seconds...")
-            time.sleep(delay)
-        else:
-            logger.error(
-                f"All {max_retries + 1} attempts failed to retrieve transcript for {youtube_url}."
-            )
-
-    return cleaned_transcript_text.strip()  # Will be empty if all attempts fail
-
-
-def extract_content_webpage_selenium_bs4(webpage_url: str) -> str:
-    """Extracts cleaned text content from a dynamic webpage using Selenium (Firefox) with retries."""
-    logger.info(
-        f"Attempting to extract content from dynamic webpage via Selenium/BeautifulSoup for: {webpage_url}"
-    )
-
-    max_retries = 2  # Total attempts: 1 initial + 2 retries
-    retry_delays = [1, 2]  # Delays in seconds for subsequent retries
-
-    cleaned_text = ""
-
-    for attempt in range(max_retries + 1):
-        driver = None
-        try:
-            logger.info(
-                f"Attempt {attempt + 1}/{max_retries + 1} to extract content from {webpage_url}"
-            )
-            driver = _get_firefox_driver()
-            driver.get(webpage_url)
-
-            # Wait for the body to have non-empty text, indicating content has loaded
-            WebDriverWait(driver, 20).until(
-                lambda d: d.find_element(By.TAG_NAME, "body").text.strip() != ""
-            )
-
-            html_content = driver.page_source
-            cleaned_text = _clean_html_content(html_content)
-
-            if cleaned_text.strip():
-                logger.info(
-                    f"Successfully extracted content on attempt {attempt + 1} for {webpage_url}."
-                )
-                return cleaned_text.strip()
-            else:
-                logger.warning(
-                    f"Extracted content was empty on attempt {attempt + 1} for {webpage_url}."
-                )
-
-        except (TimeoutException, NoSuchElementException, WebDriverException) as e:
-            logger.warning(
-                f"Attempt {attempt + 1} failed for {webpage_url} due to a Selenium error: {e}"
-            )
-        except Exception as e:
-            logger.error(
-                f"An unexpected error occurred during dynamic webpage extraction on attempt {attempt + 1} for {webpage_url}: {e}"
-            )
-        finally:
-            if driver:
-                driver.quit()
-                logger.info(f"Driver quit for attempt {attempt + 1}.")
-
-        if attempt < max_retries:
-            delay = retry_delays[attempt]
-            logger.info(f"Retrying in {delay} seconds...")
-            time.sleep(delay)
-        else:
-            logger.error(
-                f"All {max_retries + 1} attempts failed to retrieve content for {webpage_url}."
-            )
-
-    return cleaned_text.strip()  # Will be empty if all attempts fail
-
-
-# --- MAIN CLASS ---
-
 
 class ContentSummarizer:
     """
-    Fetches, parses, and summarizes content from YouTube or webpages using a hybrid approach.
+    Summarizes content using an LLM via the unified LLMClient.
+    Delegates text extraction to ContentExtractor with robust retry logic.
     """
 
-    def __init__(self, poe_api_key: str, model: str = "Gemini-2.5-Flash"):
+    def __init__(self, config: dict, model: str = "Gemini-2.5-Flash"):
+        """
+        Args:
+            config (dict): Global configuration containing api_keys.
+            model (str): The default model to use for summarization.
+        """
+        self.config = config
         self.model = model
-        try:
-            self.client = openai.OpenAI(
-                api_key=poe_api_key, base_url="https://api.poe.com/v1"
-            )
-            logger.info(
-                f"ContentSummarizer initialized successfully for Poe API with model '{model}'."
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize Poe API client. Error: {e}")
-            raise
+
+        # Initialize Extraction Delegate
+        self.extractor = ContentExtractor(headless=True)
+
+        # Initialize Unified LLM Client
+        self.llm_client = LLMClient(config)
 
     def _clean_llm_output(self, llm_response_text: str) -> str:
-        """
-        Removes meta-commentary and 'thinking' lines (blockquotes) from the LLM output.
-        """
+        """Removes meta-commentary and 'thinking' lines from the LLM output."""
         if not llm_response_text:
             return ""
 
         lines = llm_response_text.splitlines()
-        # Keep lines that do not start with the markdown blockquote character '>'
+        # Filter out blockquotes often used for "Chain of Thought"
         cleaned_lines = [line for line in lines if not line.strip().startswith(">")]
-
-        # Join the remaining lines and remove any leading/trailing whitespace
-        result = "\n".join(cleaned_lines).strip()
-        return result
+        return "\n".join(cleaned_lines).strip()
 
     def _summarize_text(self, content: str) -> str:
-        """Sends content to the Poe API for summarization and cleans the output."""
+        """Sends content to the LLMClient for summarization."""
         if not content or len(content) < MINIMUM_CONTENT_LENGTH:
             return "Error: Not enough content to generate a meaningful summary."
 
-        logger.info(
-            f"Sending {len(content)} characters to Poe API for summarization..."
-        )
+        logger.info(f"Sending {len(content)} characters to LLM for summarization...")
         prompt = SUMMARY_PROMPT_TEMPLATE.format(content=content)
+
         try:
             start_time = time.monotonic()
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            raw_summary = response.choices[0].message.content
 
-            # Clean the raw output from the LLM
+            # Delegate to LLMClient
+            raw_summary = self.llm_client.query(
+                prompt=prompt,
+                provider="poe",  # Defaulting to Poe
+                model=self.model,
+            )
+
             cleaned_summary = self._clean_llm_output(raw_summary)
 
             duration = time.monotonic() - start_time
-            logger.info(
-                f"Poe API summarization and cleaning successful. Time taken: {duration:.2f} seconds."
-            )
+            logger.info(f"Summarization successful. Time: {duration:.2f}s.")
             return cleaned_summary
         except Exception as e:
-            logger.error(f"Poe API call failed: {e}")
-            return f"Error: Failed to generate summary due to an API error: {e}"
+            logger.error(f"Summarization failed: {e}")
+            return f"Error: Failed to generate summary: {e}"
 
     def summarize(self, source_name: str, url: str) -> str:
         """
         Public method to orchestrate content fetching and summarization.
+        Includes RETRY LOGIC for robust extraction.
         """
-        logger.info(f"--- Starting summarization for '{source_name}': {url} ---")
-        parsed_url = urlparse(url)
-        is_youtube = (
-            "youtube.com" in parsed_url.hostname or "youtu.be" in parsed_url.hostname
-        )
+        logger.info(f"--- Processing: '{source_name}': {url} ---")
 
         content = ""
+        max_retries = 2
+        retry_delays = [2, 3]  # Wait 2s after first fail, 3s after second
 
-        if is_youtube:
-            content = extract_transcript_youtube_api(url)
-            if not content or len(content) < MINIMUM_CONTENT_LENGTH:
-                logger.info(
-                    "API method failed or returned insufficient content. Trying Tactiq fallback."
+        for attempt in range(max_retries + 1):
+            try:
+                if attempt > 0:
+                    logger.info(
+                        f"Extraction attempt {attempt + 1}/{max_retries + 1}..."
+                    )
+
+                # 1. Delegate extraction
+                content = self.extractor.get_text(url)
+
+                # 2. Check content quality
+                # ContentExtractor returns error strings starting with "[" often, or empty strings
+                if (
+                    content
+                    and len(content) >= MINIMUM_CONTENT_LENGTH
+                    and not content.startswith("[Error")
+                ):
+                    # Success
+                    break
+
+                # If we are here, content was insufficient or an error string
+                logger.warning(
+                    f"Attempt {attempt + 1}: Extracted content insufficient or failed. (Len: {len(content) if content else 0})"
                 )
-                content = extract_transcript_youtube_tactiq(url)
-        else:
-            content = extract_content_webpage_selenium_bs4(url)
 
-        if not content or len(content) < MINIMUM_CONTENT_LENGTH:
-            error_message = (
-                f"Failed to extract any usable content from {url} after all attempts."
-            )
-            logger.error(error_message)
-            return f"Error: {error_message}"
+            except Exception as e:
+                logger.error(
+                    f"Attempt {attempt + 1}: Extraction threw exception for {url}: {e}"
+                )
 
+            # Logic for retrying
+            if attempt < max_retries:
+                delay = retry_delays[attempt]
+                logger.info(f"Retrying extraction in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                # All attempts failed
+                error_msg = f"Failed to extract usable content from {url} after {max_retries + 1} attempts."
+                logger.error(error_msg)
+                return f"Error: {error_msg}"
+
+        # 3. Summarize
         return self._summarize_text(content)
