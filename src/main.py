@@ -3,9 +3,9 @@ import sys
 import os
 
 from modules.config_manager import ConfigManager
-from agents.global_news_aggregator import GlobalNewsAggregator
-from agents.historical_materialist_researcher import HistoricalMaterialistResearcher
-from agents.news_summariser import NewsSummariser
+from services.global_news_aggregator import GlobalNewsAggregator
+from services.historical_materialist_researcher import HistoricalMaterialistResearcher
+from services.news_summariser import NewsSummariser
 
 
 def main():
