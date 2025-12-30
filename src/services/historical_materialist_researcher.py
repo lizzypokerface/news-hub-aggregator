@@ -8,7 +8,6 @@ from modules.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
-# --- PROMPT TEMPLATES ---
 
 TITLE_GENERATION_PROMPT = """
 You are an editor. Read the following analysis and generate a short, descriptive title (maximum 8 words).
