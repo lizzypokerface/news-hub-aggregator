@@ -101,54 +101,26 @@ class ContentSummarizer:
     def summarize(self, source_name: str, url: str) -> str:
         """
         Public method to orchestrate content fetching and summarization.
-        Includes RETRY LOGIC for robust extraction.
         """
         logger.info(f"--- Processing: '{source_name}': {url} ---")
 
-        content = ""
-        max_retries = 2
-        retry_delays = [2, 3]  # Wait 2s after first fail, 3s after second
+        try:
+            # 1. Fetch Content (Extractor handles retries internally)
+            content = self.extractor.get_text(url)
 
-        for attempt in range(max_retries + 1):
-            try:
-                if attempt > 0:
-                    logger.info(
-                        f"Extraction attempt {attempt + 1}/{max_retries + 1}..."
-                    )
-
-                # 1. Delegate extraction
-                content = self.extractor.get_text(url)
-
-                # 2. Check content quality
-                # ContentExtractor returns error strings starting with "[" often, or empty strings
-                if (
-                    content
-                    and len(content) >= MINIMUM_CONTENT_LENGTH
-                    and not content.startswith("[Error")
-                ):
-                    # Success
-                    break
-
-                # If we are here, content was insufficient or an error string
-                logger.warning(
-                    f"Attempt {attempt + 1}: Extracted content insufficient or failed. (Len: {len(content) if content else 0})"
-                )
-
-            except Exception as e:
-                logger.error(
-                    f"Attempt {attempt + 1}: Extraction threw exception for {url}: {e}"
-                )
-
-            # Logic for retrying
-            if attempt < max_retries:
-                delay = retry_delays[attempt]
-                logger.info(f"Retrying extraction in {delay} seconds...")
-                time.sleep(delay)
-            else:
-                # All attempts failed
-                error_msg = f"Failed to extract usable content from {url} after {max_retries + 1} attempts."
+            # 2. Validate
+            if (
+                not content
+                or len(content) < MINIMUM_CONTENT_LENGTH
+                or content.startswith("[Error")
+            ):
+                error_msg = f"Failed to extract usable content from {url}."
                 logger.error(error_msg)
                 return f"Error: {error_msg}"
 
-        # 3. Summarize
-        return self._summarize_text(content)
+            # 3. Summarize
+            return self._summarize_text(content)
+
+        except Exception as e:
+            logger.error(f"Critical error in summarize workflow for {url}: {e}")
+            return f"Error: {e}"

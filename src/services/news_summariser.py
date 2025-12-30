@@ -77,7 +77,7 @@ class NewsSummariser:
                 summary = self.summarizer.summarize(str(region_name), url)
 
                 # Context is Source
-                markdown_content += f"## {title} | {source_name} | {collected_at}\n"
+                markdown_content += f"## {source_name} | {title} | {collected_at}\n"
                 markdown_content += f"source: {url}\n\n"
                 markdown_content += f"{summary}\n\n"
                 markdown_content += "---\n\n"
@@ -120,7 +120,7 @@ class NewsSummariser:
                 summary = self.summarizer.summarize(str(source_name), url)
 
                 # Context is Region
-                markdown_content += f"## {title} | {region_name} | {collected_at}\n"
+                markdown_content += f"## {region_name} | {title} | {collected_at}\n"
                 markdown_content += f"source: {url}\n\n"
                 markdown_content += f"{summary}\n\n"
                 markdown_content += "---\n\n"
