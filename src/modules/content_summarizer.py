@@ -56,7 +56,7 @@ class ContentSummarizer:
         self.model = model
 
         # Initialize Extraction Delegate
-        self.extractor = ContentExtractor(headless=True)
+        self.extractor = ContentExtractor(config=config, headless=True)
 
         # Initialize Unified LLM Client
         self.llm_client = LLMClient(config)

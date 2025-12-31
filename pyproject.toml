@@ -6,7 +6,7 @@ authors = ["Lizzy Poker Face <165659964+lizzypokerface@users.noreply.github.com>
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.14"
+python = ">=3.10,<3.14"
 pre-commit = "^4.3.0"
 selenium = "^4.35.0"
 pandas = "^2.3.2"
@@ -17,6 +17,7 @@ langchain-core = "^0.3.75"
 google-api-python-client = "^2.181.0"
 openai = "^1.107.0"
 youtube-transcript-api = "^1.2.2"
+pytest = "^9.0.2"
 
 
 [build-system]
