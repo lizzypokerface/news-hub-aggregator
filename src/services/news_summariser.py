@@ -77,7 +77,9 @@ class NewsSummariser:
                 summary = self.summarizer.summarize(str(region_name), url)
 
                 # Context is Source
-                markdown_content += f"## {source_name} | {title} | {collected_at}\n"
+                markdown_content += f"## {title}\n"
+                markdown_content += f"collected at: {collected_at}\n\n"
+                markdown_content += f"source name: {source_name}\n\n"
                 markdown_content += f"source: {url}\n\n"
                 markdown_content += f"{summary}\n\n"
                 markdown_content += "---\n\n"
@@ -114,13 +116,15 @@ class NewsSummariser:
                 title = row.get("title", "No Title")
                 url = row.get("url", "#")
                 collected_at = row.get("collected_at", "Unknown Date")
-                region_name = row.get("region", "Unknown Region")
+                source_name = row.get("source", "Unknown Source")
 
                 logger.info(f"Summarizing: {title}")
                 summary = self.summarizer.summarize(str(source_name), url)
 
                 # Context is Region
-                markdown_content += f"## {region_name} | {title} | {collected_at}\n"
+                markdown_content += f"## {title}\n"
+                markdown_content += f"collected at: {collected_at}\n\n"
+                markdown_content += f"source name: {source_name}\n\n"
                 markdown_content += f"source: {url}\n\n"
                 markdown_content += f"{summary}\n\n"
                 markdown_content += "---\n\n"
