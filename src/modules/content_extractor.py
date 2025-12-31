@@ -33,8 +33,8 @@ class ContentExtractor:
 
     def __init__(self, headless: bool = True):
         self.headless = headless
-        self.max_retries = 1
-        self.retry_delays = [2]  # Wait 2s between retries
+        self.max_retries = 2
+        self.retry_delays = [2, 2]  # Wait 2s between retries
 
     def _init_driver(self):
         """Initializes and returns a fresh Firefox WebDriver."""
@@ -109,50 +109,6 @@ class ContentExtractor:
         except Exception as e:
             logger.error(f"API extraction error for {video_id}: {e}")
             return ""
-
-    def _extract_transcript_youtube_api(self, youtube_url: str) -> str:
-        """
-        Primary Method: Extracts transcript using youtube-transcript-api.
-        Includes retry logic for network glitches, but fails fast for disabled transcripts.
-        """
-        video_id = self._get_video_id(youtube_url)
-        if not video_id:
-            logger.warning(
-                f"Could not determine Video ID for API extraction: {youtube_url}"
-            )
-            return ""
-
-        for attempt in range(self.max_retries + 1):
-            try:
-                if attempt > 0:
-                    logger.info(
-                        f"API Retry {attempt + 1}/{self.max_retries + 1} for {video_id}..."
-                    )
-
-                # Fetch Transcript
-                ytt_api = YouTubeTranscriptApi()
-                transcripts_snippets_list = ytt_api.fetch(video_id=video_id)
-                # Combine all text snippets into one string
-                full_text = " ".join([t.text for t in transcripts_snippets_list])
-
-                logger.info("API extraction successful.")
-                return full_text
-
-            except (TranscriptsDisabled, NoTranscriptFound):
-                # Deterministic error: Retrying will not help. Fail fast.
-                logger.warning(
-                    f"API Transcript unavailable/disabled for {video_id}. Switching to fallback."
-                )
-                return ""
-
-            except Exception as e:
-                # Transient error (Network, etc): Retry allowed.
-                logger.error(
-                    f"API extraction error for {video_id} (Attempt {attempt + 1}): {e}"
-                )
-
-                if attempt < self.max_retries:
-                    time.sleep(self.retry_delays[attempt])
 
     def _extract_transcript_youtube_tactiq(self, youtube_url: str) -> str:
         """
