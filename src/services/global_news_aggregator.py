@@ -9,7 +9,7 @@ from modules.headline_synthesizer import HeadlineSynthesizer
 from modules.regional_summariser import RegionalSummariser
 from modules.link_collector import LinkCollector
 from modules.title_fetcher import TitleFetcher
-from modules.region_categoriser import RegionCategorizer
+from modules.region_categoriser import RegionCategoriser
 from modules.markdown_generator import MarkdownGenerator
 
 
@@ -163,11 +163,26 @@ class GlobalNewsAggregator:
 
             # Phase 3: Region Categorization
             self.logger.info("Starting Phase 3: Region Categorization")
-            categorizer = RegionCategorizer(input_df=df_with_titles)
-            df_with_regions = categorizer.categorize_regions()
+            categorizer = RegionCategoriser(self.config)
 
+            # Apply categorization row by row
+            regions = []
+            total_rows = len(df_with_titles)
+            for index, row in df_with_titles.iterrows():
+                self.logger.info(f"Processing row {index + 1}/{total_rows}...")
+
+                # Construct the input text
+                title = row.get("title", "")
+                source_name = row.get("source", "")
+                combined_text = f"Title: {title}\nSource: {source_name}"
+                region = categorizer.get_region(combined_text)
+                regions.append(region)
+
+            df_with_titles["region"] = regions
+
+            # Save results
             p3_path = os.path.join(self.output_dir, "p3_articles_with_regions.csv")
-            df_with_regions.to_csv(p3_path, index=False)
+            df_with_titles.to_csv(p3_path, index=False)
             self.logger.info(f"Phase 3 Complete. Regions saved to '{p3_path}'")
 
             self.logger.info("--- News ETL Workflow Complete ---")

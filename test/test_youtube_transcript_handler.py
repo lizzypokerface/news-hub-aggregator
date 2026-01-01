@@ -1,9 +1,4 @@
 import pytest
-# import sys
-# import os
-
-# Ensure we can import from src/modules by adding project root to path
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
 from src.modules.youtube_transcript_api_handler import YoutubeTranscriptApiHandler
 

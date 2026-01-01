@@ -1,12 +1,8 @@
 import logging
-import pandas as pd
-from typing import List
-from langchain_community.llms import Ollama
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from typing import List, Dict
+from modules.llm_client import LLMClient
 
-# --- Module-level Constants (as requested) ---
-
+# --- Module-level Constants ---
 CATEGORIES: List[str] = [
     "Global",
     "China",
@@ -25,113 +21,155 @@ CATEGORIES: List[str] = [
     "Unknown",
 ]
 
-PROMPT_TEMPLATE = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            f"""You are an expert news editor with deep geopolitical knowledge. Your task is to categorize a news article based ONLY on its title and source.
+# Map common LLM shorthands to official categories
+CATEGORY_ALIASES: Dict[str, str] = {
+    # --- North America ---
+    "us": "North America",
+    "usa": "North America",
+    "united states": "North America",
+    "america": "North America",
+    "canada": "North America",
+    "white house": "North America",  # Metonymy often returned by smaller models
+    "washington": "North America",
+    # --- Europe ---
+    "uk": "Europe",
+    "britain": "Europe",
+    "eu": "Europe",
+    "european union": "Europe",
+    "eurozone": "Europe",
+    "ukraine": "Europe",  # Major news topic, often misclassified if separate
+    "brussels": "Europe",
+    # --- Latin America & Caribbean ---
+    "latin america": "Latin America & Caribbean",
+    "latam": "Latin America & Caribbean",
+    "south america": "Latin America & Caribbean",
+    "central america": "Latin America & Caribbean",
+    "caribbean": "Latin America & Caribbean",
+    "mexico": "Latin America & Caribbean",  # Often grouped here culturally/geopolitically
+    "brazil": "Latin America & Caribbean",
+    "venezuela": "Latin America & Caribbean",
+    # --- West Asia (Middle East) ---
+    "middle east": "West Asia (Middle East)",
+    "mideast": "West Asia (Middle East)",
+    "west asia": "West Asia (Middle East)",
+    "gulf": "West Asia (Middle East)",
+    "gcc": "West Asia (Middle East)",
+    "iran": "West Asia (Middle East)",
+    "israel": "West Asia (Middle East)",
+    "palestine": "West Asia (Middle East)",
+    "gaza": "West Asia (Middle East)",
+    # --- Southeast Asia ---
+    # Note: Singapore is its own category, so we don't map it here.
+    "asean": "Southeast Asia",
+    "indochina": "Southeast Asia",
+    "indonesia": "Southeast Asia",
+    "malaysia": "Southeast Asia",
+    "philippines": "Southeast Asia",
+    "thailand": "Southeast Asia",
+    "vietnam": "Southeast Asia",
+    # --- East Asia ---
+    "northeast asia": "East Asia",
+    "japan": "East Asia",
+    "korea": "East Asia",
+    "south korea": "East Asia",
+    "north korea": "East Asia",
+    "dprk": "East Asia",
+    "taiwan": "East Asia",
+    # --- South Asia ---
+    "india": "South Asia",
+    "pakistan": "South Asia",
+    "indian subcontinent": "South Asia",
+    # --- Oceania ---
+    "australia": "Oceania",
+    "new zealand": "Oceania",
+    "nz": "Oceania",
+    "pacific islands": "Oceania",
+    # --- China ---
+    # Since 'China' is its own category, catch variations
+    "prc": "China",
+    "mainland china": "China",
+    "beijing": "China",  # Metonymy
+    # --- Russia ---
+    "russian federation": "Russia",
+    "moscow": "Russia",  # Metonymy
+    # --- Global ---
+    "world": "Global",
+    "international": "Global",
+    "un": "Global",
+    "united nations": "Global",
+}
 
-        You MUST choose exactly one category from the following list:
-        {', '.join(CATEGORIES)}
+PROMPT_TEMPLATE = """
+You are an expert news editor. Categorize the following text into exactly one of these regions:
+{categories_list}
 
-        - 'Global': Use for articles involving multiple distinct regions (e.g., a US-China summit, a UN resolution).
-        - 'China': For articles primarily about China.
-        - 'East Asia': For Japan, South Korea, North Korea.
-        - 'Singapore': Use ONLY for articles specifically about Singapore.
-        - 'Southeast Asia': For countries like Vietnam, Thailand, Indonesia, Malaysia, Philippines.
-        - 'South Asia': For India, Pakistan, Bangladesh, Sri Lanka.
-        - 'Central Asia': For Kazakhstan, Uzbekistan, etc.
-        - 'Russia': For articles primarily about Russia.
-        - 'Oceania': For Australia, New Zealand, Pacific Islands.
-        - 'West Asia (Middle East)': For countries like Lebanon, Iran, Saudi Arabia, Palestine, etc.
-        - 'Africa': For countries on the African continent.
-        - 'Europe': For European countries, including the UK and the European Union as an entity.
-        - 'Latin America & Caribbean': For countries in Central and South America, and the Caribbean.
-        - 'North America': For the United States and Canada.
-        - 'Unknown': Use ONLY if you cannot determine the region with confidence.
+Text to Analyze:
+"{text}"
 
-        Analyze the geographic entities (countries, cities, regions) mentioned in the title. The source can also be a strong clue.
-
-        Your response MUST BE ONLY the category name and nothing else. Do not add explanations or any extra text.
-        """,
-        ),
-        ("user", 'Title: "{title}"\nSource: "{source}"\n\nCategory:'),
-    ]
-)
+Instructions:
+1. Analyze the geographic entities (countries, cities) and the source context.
+2. Return ONLY the category name from the list above.
+3. Do not add punctuation, explanations, or 'Category:'.
+"""
 
 
-class RegionCategorizer:
+class RegionCategoriser:
     """
-    Categorizes articles into geographic regions using an Ollama LLM.
+    Categorizes text into geographic regions using a lightweight LLM via LLMClient.
     """
 
-    def __init__(self, input_df: pd.DataFrame, model: str = "qwen2.5:32b"):
-        """
-        Initializes the categorizer and sets up the LangChain connection.
+    def __init__(self, config: dict, model: str = "qwen2.5:14b"):
+        self.logger = logging.getLogger(__name__)
+        self.model = model
+        self.llm_client = LLMClient(config)
 
-        Args:
-            input_df (pd.DataFrame): DataFrame with 'title' and 'source' columns.
-            model (str): The Ollama model to use.
+    def get_region(self, text: str) -> str:
         """
-        if not isinstance(input_df, pd.DataFrame) or input_df.empty:
-            raise ValueError("A non-empty pandas DataFrame must be provided.")
-        self.df = input_df.copy()
+        Determines the geographic region for a given text string.
+        """
+        if not text:
+            return "Unknown"
+
+        # Format prompt
+        prompt = PROMPT_TEMPLATE.format(
+            categories_list=", ".join(CATEGORIES), text=text
+        )
 
         try:
-            logging.info(f"Initializing connection to Ollama with model '{model}'...")
-            llm = Ollama(model=model, temperature=0.0)
-            self.chain = PROMPT_TEMPLATE | llm | StrOutputParser()
-            logging.info("Ollama connection successful.")
-        except Exception as e:
-            logging.error(
-                f"Failed to initialize Ollama. Is the application running and the model '{model}' pulled?"
+            # We use 'ollama' provider for local small models
+            response = self.llm_client.query(
+                prompt, provider="ollama", model=self.model
             )
-            raise RuntimeError(f"Ollama initialization failed: {e}")
 
-    def _get_region_for_row(self, title: str, source: str) -> str:
-        """
-        Invokes the LLM for a single row and handles errors.
+            # 1. Clean response
+            cleaned_category = response.strip().strip('"').strip("'")
 
-        Returns:
-            The category string or 'Unknown' if any error occurs.
-        """
-        try:
-            input_data = {"title": title, "source": source}
-            category = self.chain.invoke(input_data)
+            # 2. Check Aliases (Normalization)
+            if cleaned_category.lower() in CATEGORY_ALIASES:
+                normalized_cat = CATEGORY_ALIASES[cleaned_category.lower()]
+                self.logger.info(f"{text[:50]}... category assigned <{normalized_cat}>")
+                return normalized_cat
 
-            cleaned_category = category.strip()
-            if cleaned_category not in CATEGORIES:
-                logging.warning(
-                    f"LLM returned an invalid category: '{cleaned_category}'. Defaulting to 'Unknown'."
+            # 3. Exact Match Check
+            if cleaned_category in CATEGORIES:
+                self.logger.info(
+                    f"{text[:50]}... category assigned <{cleaned_category}>"
                 )
-                return "Unknown"
+                return cleaned_category
 
-            logging.info(f"Categorized '{title}' as '{cleaned_category}'")
-            return cleaned_category
+            # 4. Fallback: Case-insensitive check against valid categories
+            for cat in CATEGORIES:
+                if cat.lower() == cleaned_category.lower():
+                    self.logger.info(f"{text[:50]}... category assigned <{cat}>")
+                    return cat
 
-        except Exception as e:
-            logging.error(
-                f"LLM invocation failed for title '{title}'. Error: {e}. Defaulting to 'Unknown'."
+            self.logger.warning(
+                f"Invalid category returned: '{cleaned_category}'. Defaulting to 'Unknown'."
             )
             return "Unknown"
 
-    def categorize_regions(self) -> pd.DataFrame:
-        """
-        Processes the entire DataFrame to add a 'region' column.
-        """
-        regions: List[str] = []
-
-        logging.info("--- Starting Region Categorization ---")
-        total_rows = len(self.df)
-        for index, row in self.df.iterrows():
-            logging.info(f"Processing row {index + 1}/{total_rows}...")
-
-            title = row.get("title", "")
-            source = row.get("source", "")
-
-            region = self._get_region_for_row(title, source)
-            regions.append(region)
-
-        self.df["region"] = regions
-        logging.info("--- Region Categorization Complete ---")
-        return self.df
+        except Exception as e:
+            self.logger.error(
+                f"Categorization failed for text: '{text[:30]}...'. Error: {e}"
+            )
+            return "Unknown"

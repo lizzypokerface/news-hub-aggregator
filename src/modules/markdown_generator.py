@@ -106,11 +106,8 @@ class MarkdownGenerator:
             # Step 1: ALWAYS add the region header with two newlines after it.
             post_content += f"\n# {heading}\n\n"
 
-            print(post_content)
-
             # Step 2: CONDITIONALLY check if this region has articles to add.
             if region_name in unique_regions_in_df:
-                print("should not run - east asia")
                 # If articles exist, format and add them.
                 region_df = grouped_by_region.get_group(region_name)
                 article_lines = [
