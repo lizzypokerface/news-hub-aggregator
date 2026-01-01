@@ -22,7 +22,8 @@ def mock_llm_client():
 
 
 @pytest.fixture
-def categoriser(mock_config):
+# This fixture is needed to ensure LLMClient is patched for all tests using categoriser.  # noqa: F841
+def categoriser(mock_config, mock_llm_client):
     """Initializes the RegionCategorizer with mocked dependencies."""
     return RegionCategoriser(mock_config, model="qwen2.5:14b")
 
