@@ -23,12 +23,80 @@ CATEGORIES: List[str] = [
 
 # Map common LLM shorthands to official categories
 CATEGORY_ALIASES: Dict[str, str] = {
-    "west asia": "West Asia (Middle East)",
-    "middle east": "West Asia (Middle East)",
-    "latin america": "Latin America & Caribbean",
-    "uk": "Europe",
+    # --- North America ---
+    "us": "North America",
     "usa": "North America",
     "united states": "North America",
+    "america": "North America",
+    "canada": "North America",
+    "white house": "North America",  # Metonymy often returned by smaller models
+    "washington": "North America",
+    # --- Europe ---
+    "uk": "Europe",
+    "britain": "Europe",
+    "eu": "Europe",
+    "european union": "Europe",
+    "eurozone": "Europe",
+    "ukraine": "Europe",  # Major news topic, often misclassified if separate
+    "brussels": "Europe",
+    # --- Latin America & Caribbean ---
+    "latin america": "Latin America & Caribbean",
+    "latam": "Latin America & Caribbean",
+    "south america": "Latin America & Caribbean",
+    "central america": "Latin America & Caribbean",
+    "caribbean": "Latin America & Caribbean",
+    "mexico": "Latin America & Caribbean",  # Often grouped here culturally/geopolitically
+    "brazil": "Latin America & Caribbean",
+    "venezuela": "Latin America & Caribbean",
+    # --- West Asia (Middle East) ---
+    "middle east": "West Asia (Middle East)",
+    "mideast": "West Asia (Middle East)",
+    "west asia": "West Asia (Middle East)",
+    "gulf": "West Asia (Middle East)",
+    "gcc": "West Asia (Middle East)",
+    "iran": "West Asia (Middle East)",
+    "israel": "West Asia (Middle East)",
+    "palestine": "West Asia (Middle East)",
+    "gaza": "West Asia (Middle East)",
+    # --- Southeast Asia ---
+    # Note: Singapore is its own category, so we don't map it here.
+    "asean": "Southeast Asia",
+    "indochina": "Southeast Asia",
+    "indonesia": "Southeast Asia",
+    "malaysia": "Southeast Asia",
+    "philippines": "Southeast Asia",
+    "thailand": "Southeast Asia",
+    "vietnam": "Southeast Asia",
+    # --- East Asia ---
+    "northeast asia": "East Asia",
+    "japan": "East Asia",
+    "korea": "East Asia",
+    "south korea": "East Asia",
+    "north korea": "East Asia",
+    "dprk": "East Asia",
+    "taiwan": "East Asia",
+    # --- South Asia ---
+    "india": "South Asia",
+    "pakistan": "South Asia",
+    "indian subcontinent": "South Asia",
+    # --- Oceania ---
+    "australia": "Oceania",
+    "new zealand": "Oceania",
+    "nz": "Oceania",
+    "pacific islands": "Oceania",
+    # --- China ---
+    # Since 'China' is its own category, catch variations
+    "prc": "China",
+    "mainland china": "China",
+    "beijing": "China",  # Metonymy
+    # --- Russia ---
+    "russian federation": "Russia",
+    "moscow": "Russia",  # Metonymy
+    # --- Global ---
+    "world": "Global",
+    "international": "Global",
+    "un": "Global",
+    "united nations": "Global",
 }
 
 PROMPT_TEMPLATE = """
