@@ -181,7 +181,7 @@ class HistoricalMaterialistResearcher:
         ] = []  # Stores links in memory to avoid re-reading files
 
         # --- Helpers ---
-        self.extractor = ContentExtractor()
+        self.extractor = ContentExtractor(config)
         self.llm = LLMClient(config)
 
     def conduct_research(
