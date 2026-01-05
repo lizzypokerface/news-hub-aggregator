@@ -5,6 +5,7 @@ from interfaces.models import (
     AnalysisHeadlines,
     MainstreamHeadlines,
     MaterialistAnalyses,
+    GeopoliticalLedger,
     ReportArtifact,
 )
 
@@ -130,6 +131,32 @@ class MarkdownReportBuilder:
             md_buffer.append("---")
 
         return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+    def build_geopolitical_ledger_report(
+        self, data: GeopoliticalLedger
+    ) -> ReportArtifact:
+        """
+        Builds the Global Economic Snapshot Report.
+        Since the generator outputs a formatted table with a title, we mostly pass it through.
+        """
+        date_str = data.date.strftime("%Y-%m-%d")
+        filename = f"{date_str}-global_economic_snapshot.md"
+
+        md_buffer = []
+
+        # The content from the generator already includes a title and the table.
+        # We just add a generation timestamp metadata block at the top.
+        md_buffer.append("> **Generated Artifact:** Geopolitical Ledger")
+        md_buffer.append(f"> **Date:** {data.date.isoformat()}")
+        md_buffer.append("---")
+        md_buffer.append("")
+
+        if not data.ledger_content or "Error" in data.ledger_content:
+            md_buffer.append("> **Error:** No data generated.")
+        else:
+            md_buffer.append(data.ledger_content)
+
+        return ReportArtifact(content="\n".join(md_buffer), filename=filename)
 
     # ==========================================
     # Private Helpers
