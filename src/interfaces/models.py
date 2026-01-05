@@ -52,3 +52,22 @@ class AnalysisHeadlines:
     """
 
     source_groups: List[SourceHeadlines]
+
+
+@dataclass
+class MaterialistAnalysisEntry:
+    """
+    Holds the generated analysis for a specific region.
+    """
+
+    region: str
+    analysis: str
+
+
+@dataclass
+class MaterialistAnalyses:
+    """
+    Container for all regional analyses generated in Phase 4.
+    """
+
+    entries: List[MaterialistAnalysisEntry]

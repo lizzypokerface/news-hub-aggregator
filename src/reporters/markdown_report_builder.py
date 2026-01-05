@@ -1,7 +1,12 @@
 import logging
 from datetime import datetime
 from typing import List
-from interfaces.models import AnalysisHeadlines, MainstreamHeadlines, ReportArtifact
+from interfaces.models import (
+    AnalysisHeadlines,
+    MainstreamHeadlines,
+    MaterialistAnalyses,
+    ReportArtifact,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +98,37 @@ class MarkdownReportBuilder:
             md_buffer.append(dropdown)
 
         logger.info("Finished building mainstream headlines report: %s", filename)
+        return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+    def build_materialist_analysis_report(
+        self, data: MaterialistAnalyses, run_date: datetime
+    ) -> ReportArtifact:
+        """
+        Builds the Materialist Analysis Report.
+        Format:
+        # Materialist Analysis Report
+        ## Region
+        Text
+        """
+        date_str = run_date.strftime("%Y-%m-%d")
+        title = f"Materialist Analysis Report ({date_str})"
+        filename = f"{date_str}-materialist_analysis_report.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(title))
+        md_buffer.append(f"*Generated on {run_date.isoformat()}*")
+        md_buffer.append("---")
+
+        if not data.entries:
+            md_buffer.append("> No materialist analyses generated.")
+            return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+        # Iterate through the entries
+        for entry in data.entries:
+            md_buffer.append(self._h1(entry.region))
+            md_buffer.append(entry.analysis)
+            md_buffer.append("---")
+
         return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
 
     # ==========================================
