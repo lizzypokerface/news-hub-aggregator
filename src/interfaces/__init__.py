@@ -6,13 +6,8 @@ ensuring that only the specified base classes are accessible when importing from
 """
 
 from .consolidator import BaseConsolidator
-# from .generator import BaseGenerator
-# from .synthesizer import BaseSynthesizer
-# from .orchestrator import BaseOrchestrator
+from .generator import BaseGenerator
+from .synthesizer import BaseSynthesizer
+from .orchestrator import BaseOrchestrator
 
-__all__ = [
-    "BaseConsolidator",
-    # "BaseGenerator",
-    # "BaseSynthesizer",
-    # "BaseOrchestrator"
-]
+__all__ = ["BaseConsolidator", "BaseGenerator", "BaseSynthesizer", "BaseOrchestrator"]
