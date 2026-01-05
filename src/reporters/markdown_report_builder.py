@@ -1,0 +1,124 @@
+import logging
+from datetime import datetime
+from typing import List
+from interfaces.models import AnalysisHeadlines, MainstreamHeadlines, ReportArtifact
+
+logger = logging.getLogger(__name__)
+
+
+class MarkdownReportBuilder:
+    """
+    Presentation Layer.
+    Converts internal Data Models into formatted Markdown strings.
+    Returns a ReportArtifact containing content and filename.
+    """
+
+    def build_consolidated_analysis_headlines_report(
+        self, data: AnalysisHeadlines, run_date: datetime
+    ) -> ReportArtifact:
+        """
+        Builds the report for Analysis Headlines.
+        """
+        logger.info(
+            "Building consolidated analysis headlines report for date: %s", run_date
+        )
+        date_str = run_date.strftime("%Y-%m-%d")
+        title = f"Consolidated Analysis Headlines ({date_str})"
+        filename = f"{date_str}-consolidated_analysis_headlines_report.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(title))
+        md_buffer.append(f"*Generated on {run_date.isoformat()}*")
+        md_buffer.append("---")
+
+        if not data.source_groups:
+            logger.warning("No analysis data found for date: %s", run_date)
+            md_buffer.append("> No analysis data found.")
+            return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+        for source in data.source_groups:
+            logger.debug(
+                "Processing source: %s with %d titles",
+                source.source_name,
+                len(source.titles),
+            )
+            content_block = self._format_list(source.titles)
+            dropdown = self._create_dropdown(
+                title=f"{source.source_name} ({len(source.titles)})",
+                content=content_block,
+            )
+            md_buffer.append(dropdown)
+
+        logger.info("Finished building analysis headlines report: %s", filename)
+        return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+    def build_consolidated_mainstream_headlines_report(
+        self, data: MainstreamHeadlines, run_date: datetime
+    ) -> ReportArtifact:
+        """
+        Builds the report for Mainstream Headlines.
+        Signature matches the new Consolidator return type.
+        """
+        logger.info(
+            "Building consolidated mainstream headlines report for date: %s", run_date
+        )
+        date_str = run_date.strftime("%Y-%m-%d")
+        title = f"Consolidated Mainstream Headlines ({date_str})"
+        filename = f"{date_str}-consolidated_mainstream_headlines_report.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(title))
+        md_buffer.append(f"*Generated on {run_date.isoformat()}*")
+        md_buffer.append("---")
+
+        if not data.entries:
+            logger.warning("No mainstream data found for date: %s", run_date)
+            md_buffer.append("> No mainstream data found.")
+            return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+        for entry in data.entries:
+            display_title = f"{entry.source_name} [{entry.source_type.upper()}]"
+            logger.debug(
+                "Processing mainstream entry: %s of type %s",
+                entry.source_name,
+                entry.source_type,
+            )
+            if entry.source_type == "youtube":
+                inner_content = entry.content
+            else:
+                text = entry.content[0] if entry.content else "No content."
+                inner_content = text
+
+            dropdown = self._create_dropdown(title=display_title, content=inner_content)
+            md_buffer.append(dropdown)
+
+        logger.info("Finished building mainstream headlines report: %s", filename)
+        return ReportArtifact(content="\n\n".join(md_buffer), filename=filename)
+
+    # ==========================================
+    # Private Helpers
+    # ==========================================
+
+    def _h1(self, text: str) -> str:
+        return f"# {text}"
+
+    def _h2(self, text: str) -> str:
+        return f"## {text}"
+
+    def _blockquote(self, text: str) -> str:
+        return f"> {text}"
+
+    def _format_list(self, items: List[str]) -> str:
+        if not items:
+            return "_No items_"
+        return "\n".join([f"- {item}" for item in items])
+
+    def _create_dropdown(self, title: str, content: str) -> str:
+        return f"""
+<details>
+<summary><b>{title}</b></summary>
+
+{content}
+
+</details>
+"""
