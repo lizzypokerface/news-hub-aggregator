@@ -7,7 +7,7 @@ from interfaces.models import MultiLensAnalysis, MultiLensRegionEntry, LensAnaly
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-2.5-Flash"
+MODEL_NAME = "Gemini-3-Pro"
 
 # Standard Region Order
 REQUIRED_REGIONS = [
@@ -27,69 +27,65 @@ REQUIRED_REGIONS = [
     "Oceania",
 ]
 
-# Updated Prompt: Focused on ONE region at a time
-SINGLE_REGION_LENS_PROMPT = """
+# Prompt: Handles a LIST of regions
+BATCH_LENS_PROMPT = """
 You are **Crucible Analyst**, a sophisticated geopolitical analysis engine.
 
-**TASK:** Generate a Multi-Lens (Cubist) Analysis specifically for the region: **{target_region}**.
+**TASK:** Generate a Multi-Lens (Cubist) Analysis for the following **{count} regions**:
+{target_regions_list}
 
 **INPUT CONTEXT:**
 {input_context}
 
 ---
 ### **THE 9 ANALYTICAL LENSES**
-
 **1. The GPE Perspective ("map of reality")**
-- Mandate: Ground analysis in Historical Materialism. Ask "Cui bono?". Focus on class interests, imperialism, and system contradictions.
-
+- Mandate: Historical Materialism. Class interests, imperialism, contradictions.
 **2. The Market Fundamentalist**
-- Mandate: Focus on efficiency, incentives, and "market corrections". View government intervention as distortion.
-
+- Mandate: Efficiency, incentives, "market corrections".
 **3. The Liberal Institutionalist**
-- Mandate: Focus on international law, norms, human rights, and diplomacy. The "rules-based order" is paramount.
-
+- Mandate: International law, norms, human rights, "rules-based order".
 **4. The Realist**
-- Mandate: Focus on power distribution, security, and national interest. Ideology is noise; hard power is real.
-
+- Mandate: Power distribution, security, national interest.
 **5. The Civilizational Nationalist**
-- Mandate: Focus on identity, culture, and "clash of civilizations".
-
+- Mandate: Identity, culture, "clash of civilizations".
 **6. The Post-Structuralist Critic**
-- Mandate: Deconstruct language and narratives. How is power using discourse ("security", "terrorist") to legitimize itself?
-
+- Mandate: Deconstruct language, narratives, power of discourse.
 **7. The Singaporean Strategist**
-- Mandate: Principled Pragmatism. Focus on survival, economic reliance, and omnidirectional engagement.
-
+- Mandate: Principled Pragmatism. Survival, foundations, omnidirectional engagement.
 **8. The CPC Strategist**
-- Mandate: Dialectical Materialism with Chinese Characteristics. Focus on development, stability, and long-term national rejuvenation.
-
+- Mandate: Dialectical Materialism w/ Chinese Characteristics. Development, stability.
 **9. The Fusion (Actionable Strategy)**
-- Mandate: The "Sovereign Practitioner". Synthesize the above views into a ruthless, concrete, actionable strategy for a sovereign state in this region.
+- Mandate: The "Sovereign Practitioner". Concrete, ruthless, actionable strategy.
 
 ---
 ### **PROCESSING INSTRUCTIONS**
 
-1.  Analyze the input context for events relevant to **{target_region}**.
-2.  If NO relevant events are found for this region, output: "NO_DATA_FOUND".
-3.  Otherwise, generate all 9 perspectives. Each analysis should be **150 words**.
+1.  Iterate through the **Target Regions** listed above.
+2.  For each region, analyze the Input Context.
+3.  Generate all 9 perspectives (approx 100-150 words each).
 
 **OUTPUT FORMAT (Strict Markdown):**
-Use Level 3 headers for Lenses (`### Lens Name`). Do not include the Region header (we handle that externally).
+Use Level 2 headers for Regions (`## Region`) and Level 3 headers for Lenses (`### Lens Name`).
 
+## [First Region Name]
 ### The GPE Perspective
 [Analysis...]
-
-### The Market Fundamentalist
+...
+### The Fusion
 [Analysis...]
 
-(Continue for all 9 lenses...)
+## [Second Region Name]
+...
+(Repeat for all requested regions)
 """
 
 
 class MultiLensSynthesizer(BaseSynthesizer):
     """
+    Phase 6: Multi-Lens Analysis.
     Refracts regional intelligence through 9 distinct ideological frameworks.
-    Iterates Region-by-Region to avoid output token limits.
+    Uses Batch Processing (5-5-4) to optimize API calls.
     """
 
     def synthesize(
@@ -99,11 +95,9 @@ class MultiLensSynthesizer(BaseSynthesizer):
         materialist_text: str,
         econ_text: str,
     ) -> MultiLensAnalysis:
-        logger.info("Synthesizing Multi-Lens Analysis (Iterative Phase 6)...")
+        logger.info("Synthesizing Multi-Lens Analysis (Batch Mode 5-5-4)...")
 
         # 1. Prepare Global Context
-        # We pass the full context to every call so the LLM can see cross-regional connections
-        # (e.g., a decision in DC affects Oceania).
         combined_context = (
             f"=== ECONOMICS ===\n{econ_text[:500000]}\n\n"
             f"=== MAINSTREAM ===\n{mainstream_text[:1000000]}\n\n"
@@ -113,14 +107,20 @@ class MultiLensSynthesizer(BaseSynthesizer):
 
         final_entries: List[MultiLensRegionEntry] = []
 
-        # 2. Iterate Through Each Region
-        for region in REQUIRED_REGIONS:
-            logger.info(f"   > Processing Lenses for: {region}...")
+        # 2. Define Batches (5, 5, 4)
+        # You can adjust 'chunk_size' to tune performance vs. token limits
+        batches = self._chunk_list(REQUIRED_REGIONS, 5)
+
+        # 3. Process Batches
+        for batch_index, batch_regions in enumerate(batches):
+            region_list_str = ", ".join(batch_regions)
+            logger.info(f"   > Processing Batch {batch_index + 1}: [{region_list_str}]")
 
             try:
-                # Format prompt for THIS region only
-                prompt = SINGLE_REGION_LENS_PROMPT.format(
-                    target_region=region, input_context=combined_context
+                prompt = BATCH_LENS_PROMPT.format(
+                    count=len(batch_regions),
+                    target_regions_list=self._format_list_for_prompt(batch_regions),
+                    input_context=combined_context,
                 )
 
                 # Query LLM
@@ -128,44 +128,62 @@ class MultiLensSynthesizer(BaseSynthesizer):
                     prompt, provider="poe", model=MODEL_NAME
                 )
 
-                # Check for "No Data" signal
-                if "NO_DATA_FOUND" in response_text:
-                    logger.warning(
-                        f"     [!] No data found for {region}. Creating placeholder."
-                    )
-                    final_entries.append(self._create_placeholder_entry(region))
-                    continue
+                # Parse Batch Output
+                batch_entries = self._parse_batch_output(response_text)
 
-                # Parse lenses
-                lenses = self._parse_lenses(response_text)
-
-                # If parsing failed or returned empty (hallucination), use placeholder
-                if not lenses:
-                    logger.warning(
-                        f"     [!] Parsing failed for {region}. Creating placeholder."
-                    )
-                    final_entries.append(self._create_placeholder_entry(region))
-                else:
-                    final_entries.append(
-                        MultiLensRegionEntry(region=region, lenses=lenses)
-                    )
+                # Append to master list
+                final_entries.extend(batch_entries)
 
             except Exception as e:
-                logger.error(f"Failed to process region {region}: {e}")
-                final_entries.append(self._create_placeholder_entry(region))
+                logger.error(f"Failed to process batch {batch_regions}: {e}")
+                # We don't fill placeholders here immediately;
+                # validation step below will handle any missing regions.
 
-        return MultiLensAnalysis(entries=final_entries)
+        # 4. Validation & Placeholder Filling
+        # This ensures that if a batch failed, we still have 14 entries (some empty)
+        validated_entries = self._validate_and_fill_regions(final_entries)
+
+        return MultiLensAnalysis(entries=validated_entries)
+
+    def _chunk_list(self, data: List[str], size: int) -> List[List[str]]:
+        """Splits a list into chunks of size 'n'."""
+        return [data[i : i + size] for i in range(0, len(data), size)]
+
+    def _format_list_for_prompt(self, regions: List[str]) -> str:
+        """Formatted bullet list for the prompt."""
+        return "\n".join([f"- {r}" for r in regions])
+
+    def _parse_batch_output(self, text: str) -> List[MultiLensRegionEntry]:
+        """
+        Parses a response containing MULTIPLE regions.
+        Format:
+        ## China
+        ...
+        ## East Asia
+        ...
+        """
+        entries = []
+        # Split by Region Header (## Region)
+        region_sections = re.split(r"(?m)^##\s+(.+)$", text)
+
+        # Iterate (skip preamble index 0)
+        for i in range(1, len(region_sections), 2):
+            region_name = region_sections[i].strip()
+            content_block = region_sections[i + 1].strip()
+
+            # Now parse the lenses within this region block
+            lenses = self._parse_lenses(content_block)
+
+            if lenses:
+                entries.append(MultiLensRegionEntry(region=region_name, lenses=lenses))
+
+        return entries
 
     def _parse_lenses(self, text: str) -> List[LensAnalysis]:
-        """
-        Parses the list of ### Headers from a single region's output.
-        """
+        """Parses the ### Lens Headers within a region block."""
         lenses = []
-        # Split by Lens Header (### Lens Name)
-        # Regex looks for line starting with ###, captures the title, then content
         lens_sections = re.split(r"(?m)^###\s+(.+)$", text)
 
-        # Section 0 is preamble, skip it.
         for i in range(1, len(lens_sections), 2):
             lens_name = lens_sections[i].strip()
             lens_content = lens_sections[i + 1].strip()
@@ -173,14 +191,33 @@ class MultiLensSynthesizer(BaseSynthesizer):
 
         return lenses
 
-    def _create_placeholder_entry(self, region: str) -> MultiLensRegionEntry:
-        """Helper to ensure the report structure remains intact even on failure."""
-        return MultiLensRegionEntry(
-            region=region,
-            lenses=[
-                LensAnalysis(
-                    lens_name="System Status",
-                    analysis_text="*No multi-lens analysis generated for this region.*",
+    def _validate_and_fill_regions(
+        self, entries: List[MultiLensRegionEntry]
+    ) -> List[MultiLensRegionEntry]:
+        """
+        Ensures all 14 required regions are present.
+        """
+        existing_map = {e.region: e for e in entries}
+        final_list = []
+        missing_regions = []
+
+        for region in REQUIRED_REGIONS:
+            if region in existing_map:
+                final_list.append(existing_map[region])
+            else:
+                missing_regions.append(region)
+                # Create Placeholder
+                placeholder_lens = LensAnalysis(
+                    lens_name="System Error",
+                    analysis_text="*Analysis failed or was skipped for this region.*",
                 )
-            ],
-        )
+                final_list.append(
+                    MultiLensRegionEntry(region=region, lenses=[placeholder_lens])
+                )
+
+        if missing_regions:
+            logger.warning(
+                f"Multi-Lens Missing Regions (Auto-filled): {missing_regions}"
+            )
+
+        return final_list
