@@ -10,6 +10,7 @@ from interfaces.models import (
     Article,
     GlobalBriefing,
     MultiLensAnalysis,
+    MainstreamNarrative,
 )
 
 logger = logging.getLogger(__name__)
@@ -264,6 +265,36 @@ class MarkdownReportBuilder:
                 )
                 md_buffer.append(dropdown)
 
+            md_buffer.append("")
+            md_buffer.append("---")
+            md_buffer.append("")
+
+        return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+    def build_mainstream_narrative_report(
+        self, narrative: MainstreamNarrative
+    ) -> ReportArtifact:
+        """
+        Builds the Mainstream Narrative Report (The 'Official Story').
+        """
+        date_str = narrative.date.strftime("%Y-%m-%d")
+        filename = f"{date_str}-mainstream_narrative.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(f"Mainstream Global Narrative ({date_str})"))
+        md_buffer.append(
+            "> **Context:** A synthesis of major global headlines and official reporting."
+        )
+        md_buffer.append("---")
+        md_buffer.append("")
+
+        if not narrative.entries:
+            md_buffer.append("> No mainstream narrative generated.")
+            return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+        for entry in narrative.entries:
+            md_buffer.append(self._h2(entry.region))
+            md_buffer.append(entry.summary_text)
             md_buffer.append("")
             md_buffer.append("---")
             md_buffer.append("")

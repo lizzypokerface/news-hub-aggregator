@@ -163,3 +163,25 @@ class MultiLensAnalysis:
 
     entries: List[MultiLensRegionEntry]
     date: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class MainstreamEventEntry:
+    """
+    A unified summary of mainstream reporting for a specific region.
+    Captures the 'Official Story' or general news chatter.
+    """
+
+    region: str
+    summary_text: str
+
+
+@dataclass
+class MainstreamNarrative:
+    """
+    The output of the MainstreamNewsSynthesizer.
+    Represents the baseline 'What the world is saying' report.
+    """
+
+    entries: List[MainstreamEventEntry]
+    date: datetime = field(default_factory=datetime.now)
