@@ -34,7 +34,7 @@ class MarkdownReportBuilder:
         )
         date_str = run_date.strftime("%Y-%m-%d")
         title = f"Consolidated Analysis Headlines ({date_str})"
-        filename = f"{date_str}-consolidated_analysis_headlines_report.md"
+        filename = f"{date_str}-analysis_headlines.md"
 
         md_buffer = []
         md_buffer.append(self._h1(title))
@@ -74,7 +74,7 @@ class MarkdownReportBuilder:
         )
         date_str = run_date.strftime("%Y-%m-%d")
         title = f"Consolidated Mainstream Headlines ({date_str})"
-        filename = f"{date_str}-consolidated_mainstream_headlines_report.md"
+        filename = f"{date_str}-mainstream_headlines.md"
 
         md_buffer = []
         md_buffer.append(self._h1(title))
