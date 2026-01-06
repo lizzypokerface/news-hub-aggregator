@@ -8,6 +8,7 @@ from interfaces.models import (
     GeopoliticalLedger,
     ReportArtifact,
     Article,
+    GlobalBriefing,
 )
 
 logger = logging.getLogger(__name__)
@@ -183,6 +184,49 @@ class MarkdownReportBuilder:
             content = article.summary if article.summary else "_No summary generated_"
             md_buffer.append(content)
 
+            md_buffer.append("---")
+            md_buffer.append("")
+
+        return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+    def build_global_briefing_report(self, briefing: GlobalBriefing) -> ReportArtifact:
+        """
+        Builds the Global Briefing Report.
+        Formats Mainstream vs. Strategic analysis distinctively.
+        """
+        date_str = briefing.date.strftime("%Y-%m-%d")
+        filename = f"{date_str}-global_briefing.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(f"Global Strategic Briefing ({date_str})"))
+        md_buffer.append(
+            "> **Synthesis of:** Mainstream, Analysis, Economic, and Materialist Intelligence."
+        )
+        md_buffer.append("---")
+        md_buffer.append("")
+
+        if not briefing.entries:
+            md_buffer.append("> No briefing generated.")
+            return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+        for entry in briefing.entries:
+            # Region Header
+            md_buffer.append(self._h2(entry.region))
+
+            # Section 1: Mainstream (Styled as a quote/callout)
+            md_buffer.append("**Mainstream Narrative:**")
+            md_buffer.append(
+                f"> {entry.mainstream_narrative.replace(chr(10), chr(10)+'> ')}"
+            )
+            # (The replace logic ensures multi-paragraph quotes are formatted correctly)
+
+            md_buffer.append("")
+
+            # Section 2: Strategic Analysis (Standard text)
+            md_buffer.append("**Strategic Analysis:**")
+            md_buffer.append(entry.strategic_analysis)
+
+            md_buffer.append("")
             md_buffer.append("---")
             md_buffer.append("")
 

@@ -110,3 +110,25 @@ class Article:
     def is_summarized(self) -> bool:
         """Helper to check if this article has been processed."""
         return self.summary is not None
+
+
+@dataclass
+class RegionalBriefingEntry:
+    """
+    A single synthesized region.
+    Separates the public narrative from the strategic reality.
+    """
+
+    region: str
+    mainstream_narrative: str  # What the news is reporting
+    strategic_analysis: str  # The materialist/strategic reality
+
+
+@dataclass
+class GlobalBriefing:
+    """
+    The final output of Phase 5.
+    """
+
+    entries: List[RegionalBriefingEntry]
+    date: datetime = field(default_factory=datetime.now)
