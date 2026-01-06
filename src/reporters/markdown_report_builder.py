@@ -7,6 +7,7 @@ from interfaces.models import (
     MaterialistAnalyses,
     GeopoliticalLedger,
     ReportArtifact,
+    Article,
 )
 
 logger = logging.getLogger(__name__)
@@ -155,6 +156,35 @@ class MarkdownReportBuilder:
             md_buffer.append("> **Error:** No data generated.")
         else:
             md_buffer.append(data.ledger_content)
+
+        return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+    def build_summary_report(
+        self, report_title: str, articles: List[Article], run_date: datetime
+    ) -> ReportArtifact:
+        """
+        Builds a stacked report of summaries.
+        """
+        date_str = run_date.strftime("%Y-%m-%d")
+        filename = f"{date_str}-{report_title}.md"
+
+        md_buffer = []
+
+        md_buffer.append(self._h1(report_title))
+
+        for article in articles:
+            md_buffer.append(self._h2(article.title))
+            md_buffer.append(f"**Source:** {article.source}")
+            md_buffer.append(f"**URL:** {article.url}")
+            md_buffer.append(f"**Collected:** {article.date_collected}")
+            md_buffer.append("")
+
+            # Use the new summary field, providing a fallback if None
+            content = article.summary if article.summary else "_No summary generated_"
+            md_buffer.append(content)
+
+            md_buffer.append("---")
+            md_buffer.append("")
 
         return ReportArtifact(content="\n".join(md_buffer), filename=filename)
 
