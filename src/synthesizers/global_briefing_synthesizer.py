@@ -9,6 +9,24 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAME = "Gemini-3-Pro"
 
+# Standard Region Order
+REQUIRED_REGIONS = [
+    "Global",
+    "China",
+    "East Asia",
+    "Singapore",
+    "Southeast Asia",
+    "South Asia",
+    "Central Asia",
+    "Russia",
+    "West Asia (Middle East)",
+    "Africa",
+    "Europe",
+    "Latin America & Caribbean",
+    "North America",
+    "Oceania",
+]
+
 BRIEFING_PROMPT_TEMPLATE = """
 You are a Geopolitical Strategy Chief. Your task is to synthesize disparate intelligence streams into a coherent **Global Situation Briefing**.
 
@@ -62,7 +80,7 @@ class GlobalBriefingSynthesizer(BaseSynthesizer):
         materialist_text: str,
         econ_text: str,
     ) -> GlobalBriefing:
-        logger.info("Synthesizing Global Briefing (Dual-Section Mode)...")
+        logger.info("Synthesizing Global Briefing...")
 
         # Large context window usage (Gemini-3-Pro style)
         prompt = BRIEFING_PROMPT_TEMPLATE.format(
@@ -77,7 +95,11 @@ class GlobalBriefingSynthesizer(BaseSynthesizer):
                 prompt, provider="poe", model=MODEL_NAME
             )
             entries = self._parse_llm_output(response_text)
-            return GlobalBriefing(entries=entries)
+
+            # Validation Step
+            final_entries = self._validate_and_fill_regions(entries)
+
+            return GlobalBriefing(entries=final_entries)
 
         except Exception as e:
             logger.error(f"Global Briefing Synthesis failed: {e}")
@@ -132,3 +154,37 @@ class GlobalBriefingSynthesizer(BaseSynthesizer):
             )
 
         return entries
+
+    def _validate_and_fill_regions(
+        self, entries: List[RegionalBriefingEntry]
+    ) -> List[RegionalBriefingEntry]:
+        """
+        Ensures all 14 required regions are present.
+        Logs warnings for missing regions and fills them with placeholders.
+        Returns a sorted list of entries matching the REQUIRED_REGIONS order.
+        """
+        # Map existing entries by region name for quick lookup
+        existing_map = {e.region: e for e in entries}
+        final_list = []
+        missing_regions = []
+
+        for region in REQUIRED_REGIONS:
+            if region in existing_map:
+                final_list.append(existing_map[region])
+            else:
+                # Region missing: Log it and create placeholder
+                missing_regions.append(region)
+                final_list.append(
+                    RegionalBriefingEntry(
+                        region=region,
+                        mainstream_narrative="*No intelligence found for this region in the current cycle.*",
+                        strategic_analysis="*No strategic analysis generated.*",
+                    )
+                )
+
+        if missing_regions:
+            logger.warning(
+                f"Global Briefing Missing Regions (Auto-filled): {missing_regions}"
+            )
+
+        return final_list
