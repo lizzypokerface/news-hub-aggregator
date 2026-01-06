@@ -9,6 +9,7 @@ from interfaces.models import (
     ReportArtifact,
     Article,
     GlobalBriefing,
+    MultiLensAnalysis,
 )
 
 logger = logging.getLogger(__name__)
@@ -225,6 +226,43 @@ class MarkdownReportBuilder:
             # Section 2: Strategic Analysis (Standard text)
             md_buffer.append("**Strategic Analysis:**")
             md_buffer.append(entry.strategic_analysis)
+
+            md_buffer.append("")
+            md_buffer.append("---")
+            md_buffer.append("")
+
+        return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+    def build_multi_lens_report(self, data: MultiLensAnalysis) -> ReportArtifact:
+        """
+        Builds the Multi-Lens Analysis Report.
+        Uses HTML <details> tags to create collapsible sections for each lens.
+        """
+        date_str = data.date.strftime("%Y-%m-%d")
+        filename = f"{date_str}-multi_lens_analysis.md"
+
+        md_buffer = []
+        md_buffer.append(self._h1(f"Multi-Lens Strategic Analysis ({date_str})"))
+        md_buffer.append(
+            "> **Methodology:** Refracting global events through 9 distinct ideological lenses."
+        )
+        md_buffer.append("---")
+        md_buffer.append("")
+
+        if not data.entries:
+            md_buffer.append("> No analysis generated.")
+            return ReportArtifact(content="\n".join(md_buffer), filename=filename)
+
+        for entry in data.entries:
+            # Region Header
+            md_buffer.append(self._h2(entry.region))
+
+            # Iterate through lenses and create dropdowns
+            for lens in entry.lenses:
+                dropdown = self._create_dropdown(
+                    title=f"Lens: {lens.lens_name}", content=lens.analysis_text
+                )
+                md_buffer.append(dropdown)
 
             md_buffer.append("")
             md_buffer.append("---")

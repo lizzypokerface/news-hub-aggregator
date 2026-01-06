@@ -132,3 +132,34 @@ class GlobalBriefing:
 
     entries: List[RegionalBriefingEntry]
     date: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class LensAnalysis:
+    """
+    A single perspective on a region (e.g., 'The Realist' view).
+    """
+
+    lens_name: str
+    analysis_text: str
+
+
+@dataclass
+class MultiLensRegionEntry:
+    """
+    Container for all 9 perspectives on a specific region.
+    """
+
+    region: str
+    lenses: List[LensAnalysis]
+
+
+@dataclass
+class MultiLensAnalysis:
+    """
+    The final output of Phase 6.
+    A collection of multi-perspective deep dives.
+    """
+
+    entries: List[MultiLensRegionEntry]
+    date: datetime = field(default_factory=datetime.now)
