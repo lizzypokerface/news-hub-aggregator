@@ -8,7 +8,7 @@ from interfaces.models import MaterialistAnalyses, MaterialistAnalysisEntry
 logger = logging.getLogger(__name__)
 
 # --- Configuration Constants ---
-MODEL_NAME = "Gemini-2.5-Flash"
+MODEL_NAME = "Gemini-3-Pro"
 
 PROMPT_TEMPLATE = """
 You are **The Materialist Analyst**. Your goal is to analyze the provided text (news reports, transcripts, intelligence briefs) and strip away the "Breaking News" sensation, diplomatic rhetoric, and moral posturing.
