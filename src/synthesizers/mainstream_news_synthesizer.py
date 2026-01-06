@@ -7,7 +7,7 @@ from interfaces.models import MainstreamNarrative, MainstreamEventEntry
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-2.5-Pro"
+MODEL_NAME = "Gemini-3-Pro"
 
 # Adapted from regional_summarizer.py to focus strictly on mainstream reporting
 MAINSTREAM_PROMPT_TEMPLATE = """
