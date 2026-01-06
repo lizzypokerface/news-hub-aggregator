@@ -6,14 +6,7 @@ from typing import Optional
 # Interfaces & Modules
 from src.interfaces import BaseOrchestrator
 from src.modules.config_manager import ConfigManager
-# from src.modules.csv_handler import CSVHandler
 
-# Consolidators (Phase 1 & 2)
-# from src.consolidators.analysis_headline_consolidator import AnalysisHeadlineConsolidator
-# from src.consolidators.mainstream_headline_consolidator import MainstreamHeadlineConsolidator
-
-# Reporters (Presentation Layer)
-# from src.reporters.markdown_report_builder import MarkdownReportBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +54,7 @@ class Orchestrator(BaseOrchestrator):
         logger.info(">>> Phase 1: Global Overview (Mainstream + Econ) Started")
 
         # 1. Mainstream Headlines
-        # consolidator = MainstreamHeadlineConsolidator(self.config_manager)
-        # data = consolidator.consolidate()
-        # builder.build_mainstream_report(data)
-
         # 2. Economic Snapshot
-        # generator = EconomicSnapshotGenerator(self.config)
-        # snapshot = generator.generate()
 
         logger.info("<<< Phase 1 Complete")
 
@@ -83,14 +70,7 @@ class Orchestrator(BaseOrchestrator):
         logger.info(">>> Phase 2: News ETL (Analysis Ingestion) Started")
 
         # 1. Run ETL (Link Collection -> Scrape)
-        # etl_service = NewsETLService(self.config, self.workspace_dir)
-        # etl_service.run_collection()
-
         # 2. Consolidate Results
-        # csv_path = os.path.join(self.workspace_dir, "p3_articles_with_regions.csv")
-        # consolidator = AnalysisHeadlineConsolidator(csv_path)
-        # data = consolidator.consolidate()
-        # builder.build_analysis_report(data)
 
         logger.info("<<< Phase 2 Complete")
 
@@ -105,8 +85,7 @@ class Orchestrator(BaseOrchestrator):
         """
         logger.info(">>> Phase 3: Batch Summarization Started")
 
-        # summariser = NewsSummariser(self.config, self.workspace_dir)
-        # summariser.summarize_all_regions()
+        # 1. Batch Summarization Service - Regional Summaries
 
         logger.info("<<< Phase 3 Complete")
 
@@ -121,9 +100,7 @@ class Orchestrator(BaseOrchestrator):
         """
         logger.info(">>> Phase 4: Materialist Analysis Started")
 
-        # analyst = MaterialistAnalyst(self.config, self.workspace_dir)
-        # analysis = analyst.analyze_regions()
-        # builder.build_materialist_report(analysis)
+        # 1. Materialist Analysis Generation
 
         logger.info("<<< Phase 4 Complete")
 
@@ -138,9 +115,7 @@ class Orchestrator(BaseOrchestrator):
         """
         logger.info(">>> Phase 5: Global Briefing Synthesis Started")
 
-        # synthesizer = GlobalBriefingSynthesizer(self.workspace_dir)
-        # briefing = synthesizer.create_briefing()
-        # builder.build_briefing_report(briefing)
+        # 1. Synthesize Briefing
 
         logger.info("<<< Phase 5 Complete")
 
@@ -155,9 +130,7 @@ class Orchestrator(BaseOrchestrator):
         """
         logger.info(">>> Phase 6: Multi-Lens Analysis Started")
 
-        # lens_analyst = MultiLensSynthesizer(self.workspace_dir)
-        # report = lens_analyst.compare_narratives()
-        # builder.build_multilens_report(report)
+        # 1. Synthesize Multi-Lens Analysis
 
         logger.info("<<< Phase 6 Complete")
 
@@ -172,8 +145,7 @@ class Orchestrator(BaseOrchestrator):
         """
         logger.info(">>> Phase 7: Final News Post Construction Started")
 
-        # publisher = PublicationService(self.workspace_dir)
-        # publisher.assemble_post()
+        # 1. Build Final News Post Report
 
         logger.info("<<< Phase 7 Complete. Production Line Finished.")
 
