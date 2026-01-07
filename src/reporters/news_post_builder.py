@@ -9,7 +9,7 @@ from src.interfaces.models import (
     ReportArtifact,
 )
 
-from src.reporters.markdown_formatter import MarkdownFormatter
+from markdown_formatter import MarkdownFormatter
 
 logger = logging.getLogger(__name__)
 
