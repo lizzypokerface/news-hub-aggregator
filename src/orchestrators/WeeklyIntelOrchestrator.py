@@ -7,10 +7,11 @@ from typing import Optional, Dict, Any, List
 from interfaces import BaseOrchestrator
 from modules.llm_client import LLMClient
 
-# Legacy Services (ETL)
-from services.global_news_aggregator import GlobalNewsAggregator
+# Services
+from services.analysis_etl_service import AnalysisETLService
+from services.summarization_service import SummarizationService
 
-# Consolidators (Phase 1 & 2)
+# Consolidators
 from consolidators.mainstream_headline_consolidator import (
     MainstreamHeadlineConsolidator,
 )
@@ -18,12 +19,11 @@ from consolidators.analysis_headline_consolidator import (
     AnalysisHeadlineConsolidator,
 )
 
-# Generators & Services (Phase 1, 3, 4)
+# Generators
 from generators.geopolitical_ledger_generator import GeopoliticalLedgerGenerator
 from generators.materialist_analysis_generator import MaterialistAnalysisGenerator
-from services.summarization_service import SummarizationService
 
-# Synthesizers (Phase 1, 5, 6)
+# Synthesizers
 from synthesizers.mainstream_news_synthesizer import MainstreamNewsSynthesizer
 from synthesizers.global_briefing_synthesizer import GlobalBriefingSynthesizer
 from synthesizers.multi_lens_synthesizer import MultiLensSynthesizer
@@ -133,28 +133,28 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
     def run_phase_2_news_etl(self):
         logger.info(">>> Phase 2: News ETL Started")
 
-        # 2.1 Run Legacy ETL
-        # This outputs 'p3_articles_with_regions.csv' to the workspace (or configured output)
-        # Note: We assume GlobalNewsAggregator is updated to respect self.workspace_dir
-        # or we move the files manually. For now, assuming standard behavior.
-        aggregator = GlobalNewsAggregator(self.config)
-        aggregator.run_news_etl()
+        # 2.1 Run Analysis ETL Service
+        # We pass the specific workspace_dir so CSVs land in the correct week folder
+        etl_service = AnalysisETLService(self.config, self.workspace_dir)
+        final_csv_path = etl_service.run_etl()
 
-        # 2.2 Consolidate Analysis Headlines
-        # Depending on where aggregator saves, ensure path matches
-        csv_path = os.path.join(
-            self.config.get("output_directory", "outputs"),
-            "p3_articles_with_regions.csv",
-        )
+        if not final_csv_path or not os.path.exists(final_csv_path):
+            logger.warning(
+                "ETL Phase failed or produced no data. Skipping report generation."
+            )
+            return
 
-        consolidator = AnalysisHeadlineConsolidator(csv_path)
+        # 2.2 Consolidate Analysis Headlines (Report Generation)
+        # We use the path returned by the service
+        consolidator = AnalysisHeadlineConsolidator(final_csv_path)
         data = consolidator.consolidate()
-
         builder = MarkdownReportBuilder()
         artifact = builder.build_consolidated_analysis_headlines_report(
             data, self.run_date
         )
         self._save_report(artifact)
+
+        logger.info("<<< Phase 2 Complete")
 
     # ==========================================
     # Phase 3: Summarization (The Intermediate)
