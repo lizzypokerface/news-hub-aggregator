@@ -39,7 +39,7 @@ class AnalysisETLService:
         logger.info(">>> Starting Analysis ETL Pipeline...")
 
         # --- Step 1: Link Collection ---
-        p1_path = os.path.join(self.workspace_dir, "etl_p1_articles_with_links.csv")
+        p1_path = os.path.join(self.workspace_dir, "p1_articles_w_links.csv")
 
         collector = LinkCollector(
             sources=self.config.get("sources", []),
@@ -66,9 +66,7 @@ class AnalysisETLService:
             logger.warning("Title fetching produced no results.")
             return ""
 
-        p2_path = os.path.join(
-            self.workspace_dir, "etl_p2_articles_with_links_titles.csv"
-        )
+        p2_path = os.path.join(self.workspace_dir, "p2_articles_w_links_titles.csv")
         df_with_titles.to_csv(p2_path, index=False)
         logger.info(f"Phase 2 Complete. Saved to: {p2_path}")
 
@@ -93,7 +91,7 @@ class AnalysisETLService:
         df_with_titles["region"] = regions
 
         p3_path = os.path.join(
-            self.workspace_dir, "etl_p3_articles_with_links_titles_regions.csv"
+            self.workspace_dir, "p3_articles_w_links_titles_regions.csv"
         )
         df_with_titles.to_csv(p3_path, index=False)
         logger.info(f"Phase 3 Complete. Final Dataset: {p3_path}")
