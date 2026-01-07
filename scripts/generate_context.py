@@ -139,6 +139,16 @@ def main():
             outfile.write("\n```\n\n")
             file_count += 1
 
+        # Get the final file size
+        total_chars = outfile.tell()
+        est_tokens = total_chars // 4
+
+        print("-" * 30)
+        print(f"Success! Combined {file_count} files into '{args.output}'.")
+        print(f"Total Context Size: {total_chars:,} characters")
+        print(f"Estimated Tokens:   ~{est_tokens:,} (based on 4 chars/token)")
+        print("-" * 30)
+
     print(f"Success! Combined {file_count} files into '{args.output}'.")
 
 
