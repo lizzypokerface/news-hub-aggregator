@@ -1,11 +1,13 @@
 import os
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
+import pandas as pd
 
 # Core Interfaces & Config
 from interfaces import BaseOrchestrator
 from modules.llm_client import LLMClient
+from src.modules.csv_handler import CSVHandler
 
 # Services
 from services.analysis_etl_service import AnalysisETLService
@@ -36,7 +38,6 @@ from reporters.markdown_report_builder import MarkdownReportBuilder
 from interfaces.models import (
     GlobalBriefing,
     MultiLensAnalysis,
-    Article,
     ReportArtifact,
 )
 
@@ -65,7 +66,7 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         llm_client: LLMClient,
         run_date: Optional[datetime] = None,
     ):
-        # Phase 0: Setup
+        # Setup
         self.config = config
         self.llm_client = llm_client
         self.run_date = run_date or datetime.now()
@@ -76,10 +77,10 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         self.workspace_dir = os.path.join(base_output, week_str)
         os.makedirs(self.workspace_dir, exist_ok=True)
 
-        # Pipeline State (Objects needed for Phase 7)
+        # Pipeline State
         self.global_briefing: Optional[GlobalBriefing] = None
         self.multi_lens_analysis: Optional[MultiLensAnalysis] = None
-        self.articles: List[Article] = []
+        self.analysis_articles_df: pd.DataFrame = None
 
         logger.info(f"Intel Pipeline Initialized. Workspace: {self.workspace_dir}")
 
@@ -153,6 +154,15 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
             data, self.run_date
         )
         self._save_report(artifact)
+
+        # 2.3 Load Data into Memory for downstream phases
+        try:
+            self.analysis_articles_df = CSVHandler.load_as_dataframe(final_csv_path)
+            logger.info(
+                f"Loaded {len(self.analysis_articles_df)} articles into memory."
+            )
+        except Exception as e:
+            logger.error(f"Failed to load articles DataFrame: {e}")
 
         logger.info("<<< Phase 2 Complete")
 
