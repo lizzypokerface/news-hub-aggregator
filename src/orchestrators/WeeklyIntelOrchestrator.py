@@ -3,16 +3,14 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-# Core Interfaces & Config
 from interfaces import BaseOrchestrator
+
 from legacy_modules.llm_client import LLMClient
 from legacy_modules.csv_handler import CSVHandler
 
-# Services
 from services.analysis_etl_service import AnalysisETLService
 from services.summarization_service import SummarizationService
 
-# Consolidators
 from consolidators.mainstream_headline_consolidator import (
     MainstreamHeadlineConsolidator,
 )
@@ -20,23 +18,18 @@ from consolidators.analysis_headline_consolidator import (
     AnalysisHeadlineConsolidator,
 )
 
-# Generators
 from generators.geopolitical_ledger_generator import GeopoliticalLedgerGenerator
 from generators.materialist_analysis_generator import MaterialistAnalysisGenerator
 
-# Synthesizers
 from synthesizers.mainstream_news_synthesizer import MainstreamNewsSynthesizer
 from synthesizers.global_briefing_synthesizer import GlobalBriefingSynthesizer
 from synthesizers.multi_lens_synthesizer import MultiLensSynthesizer
 
-# Reporters
 from reporters.markdown_report_builder import MarkdownReportBuilder
-from reporters.markdown_news_post_builder import NewsPostBuilder
+from reporters.news_post_builder import NewsPostBuilder
 
-# Managers
 from managers.workspace_manager import WorkspaceManager
 
-# Data Models
 from interfaces.models import (
     GlobalBriefing,
     MultiLensAnalysis,
@@ -255,9 +248,7 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
             return
         # Do Work
         generator = MaterialistAnalysisGenerator(self.llm_client)
-        data = generator.generate(
-            input_dir=summaries_dir
-        )  # Returns MaterialistAnalyses object
+        data = generator.generate(input_dir=summaries_dir)
         # Save Checkpoint
         self.workspace.save_checkpoint(KEY_MAT_ANALYSIS, data)
         # Save Report
@@ -278,7 +269,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
             logger.info("   [SKIP] 5.1 Global Briefing found in checkpoint. Loading...")
             data = self.workspace.load_checkpoint_json(KEY_GLOBAL_BRIEFING)
             if data:
-                # USE HELPER
                 self.global_briefing = self._reconstruct_global_briefing(data)
             return
 
@@ -330,7 +320,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
             )
             data = self.workspace.load_checkpoint_json(KEY_MULTI_LENS)
             if data:
-                # USE HELPER
                 self.multi_lens_analysis = self._reconstruct_multi_lens_analysis(data)
             return
 
@@ -377,7 +366,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
                 "CRITICAL: Global Briefing checkpoint not found. Run Phase 5."
             )
 
-        # Use Helper to Reconstruct
         global_briefing = self._reconstruct_global_briefing(gb_data)
         logger.info("   [LOAD] Global Briefing re-hydrated from disk.")
 
@@ -390,7 +378,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
                 "CRITICAL: Multi-Lens Analysis checkpoint not found. Run Phase 6."
             )
 
-        # Use Helper to Reconstruct
         multi_lens_analysis = self._reconstruct_multi_lens_analysis(mla_data)
         logger.info("   [LOAD] Multi-Lens Analysis re-hydrated from disk.")
 
