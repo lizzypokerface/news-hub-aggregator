@@ -135,7 +135,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         logger.info(">>> Phase 2: News ETL Started")
 
         # 2.1 Run Analysis ETL Service
-        # We pass the specific workspace_dir so CSVs land in the correct week folder
         etl_service = AnalysisETLService(self.config, self.workspace_dir)
         final_csv_path = etl_service.run_etl()
 
@@ -146,7 +145,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
             return
 
         # 2.2 Consolidate Analysis Headlines (Report Generation)
-        # We use the path returned by the service
         consolidator = AnalysisHeadlineConsolidator(final_csv_path)
         data = consolidator.consolidate()
         builder = MarkdownReportBuilder()
@@ -249,7 +247,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
 
         date_str = self.run_date.strftime("%Y-%m-%d")
 
-        # Inputs (Same as Phase 5)
         ms_content = self._read_file(f"{date_str}-mainstream_headlines.md")
         an_content = self._read_file(f"{date_str}-analysis_headlines.md")
         ec_content = self._read_file(f"{date_str}-global_economic_snapshot.md")
