@@ -31,7 +31,7 @@ from synthesizers.multi_lens_synthesizer import MultiLensSynthesizer
 
 # Reporters
 from reporters.markdown_report_builder import MarkdownReportBuilder
-# from src.reporters.news_post_builder import NewsPostBuilder (Upcoming)
+from reporters.markdown_news_post_builder import NewsPostBuilder
 
 # Managers
 from managers.workspace_manager import WorkspaceManager
@@ -371,72 +371,63 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # ----------------------------------------------
         # 1. Load Global Briefing (From Phase 5 JSON)
         # ----------------------------------------------
-        # gb_data = self.workspace.load_checkpoint_json("p5_global_briefing")
-        # if not gb_data:
-        #     raise ValueError(
-        #         "CRITICAL: Global Briefing checkpoint (p5_global_briefing) not found. Run Phase 5."
-        #     )
+        gb_data = self.workspace.load_checkpoint_json("p5_global_briefing")
+        if not gb_data:
+            raise ValueError(
+                "CRITICAL: Global Briefing checkpoint not found. Run Phase 5."
+            )
 
-        # # Reconstruct Object
-        # entries = [RegionalBriefingEntry(**e) for e in gb_data.get("entries", [])]
-        # global_briefing = GlobalBriefing(
-        #     entries=entries,
-        #     date=datetime.fromisoformat(gb_data["date"])
-        #     if gb_data.get("date")
-        #     else self.run_date,
-        # )
-        # logger.info("   [LOAD] Global Briefing re-hydrated from disk.")
+        # Use Helper to Reconstruct
+        global_briefing = self._reconstruct_global_briefing(gb_data)
+        logger.info("   [LOAD] Global Briefing re-hydrated from disk.")
 
         # ----------------------------------------------
         # 2. Load Multi-Lens Analysis (From Phase 6 JSON)
         # ----------------------------------------------
-        # mla_data = self.workspace.load_checkpoint_json("p6_multi_lens_analysis")
-        # if not mla_data:
-        #     raise ValueError(
-        #         "CRITICAL: Multi-Lens Analysis checkpoint (p6_multi_lens_analysis) not found. Run Phase 6."
-        #     )
+        mla_data = self.workspace.load_checkpoint_json("p6_multi_lens_analysis")
+        if not mla_data:
+            raise ValueError(
+                "CRITICAL: Multi-Lens Analysis checkpoint not found. Run Phase 6."
+            )
 
-        # # Reconstruct Object (Nested structure)
-        # mla_entries = []
-        # for entry_data in mla_data.get("entries", []):
-        #     lenses = [LensAnalysis(**l) for l in entry_data.get("lenses", [])]
-        #     mla_entries.append(
-        #         MultiLensRegionEntry(region=entry_data["region"], lenses=lenses)
-        #     )
-
-        # multi_lens_analysis = MultiLensAnalysis(
-        #     entries=mla_entries,
-        #     date=datetime.fromisoformat(mla_data["date"])
-        #     if mla_data.get("date")
-        #     else self.run_date,
-        # )
-        # logger.info("   [LOAD] Multi-Lens Analysis re-hydrated from disk.")
+        # Use Helper to Reconstruct
+        multi_lens_analysis = self._reconstruct_multi_lens_analysis(mla_data)
+        logger.info("   [LOAD] Multi-Lens Analysis re-hydrated from disk.")
 
         # ----------------------------------------------
-        # 3. Load Analysis Articles (From Phase 2/3 CSV)
+        # 3. Load Analysis Articles
         # ----------------------------------------------
-        # We use the 'p3' CSV as it represents the fully processed/region-tagged list
-        # p3_csv_path = os.path.join(
-        #     self.workspace.workspace_dir, "p3_articles_with_regions.csv"
-        # )
+        stage_03_path = os.path.join(
+            self.workspace.workspace_dir, "stage_03_enriched_articles_regions.csv"
+        )
 
-        # if not os.path.exists(p3_csv_path):
-        #     raise ValueError(
-        #         f"CRITICAL: Analysis CSV not found at {p3_csv_path}. Run Phase 2."
-        #     )
+        if not os.path.exists(stage_03_path):
+            raise ValueError(f"CRITICAL: Analysis CSV not found at {stage_03_path}.")
 
-        # # Load directly using the Handler
-        # analysis_articles_df = CSVHandler.load_as_dataframe(p3_csv_path)
-        # logger.info(
-        #     f"   [LOAD] Articles DataFrame loaded ({len(analysis_articles_df)} rows)."
-        # )
+        analysis_articles_df = CSVHandler.load_as_dataframe(stage_03_path)
+        logger.info(
+            f"   [LOAD] Articles DataFrame loaded ({len(analysis_articles_df)} rows)."
+        )
 
         # ----------------------------------------------
         # 4. Assemble Final Post
         # ----------------------------------------------
-        # WIP: Initialize the NewsPostBuilder and generate the artifact
+        logger.info("   [BUILD] Assembling final Markdown post...")
 
-        logger.info("<<< Phase 7 Complete. Production Line Finished.")
+        builder = NewsPostBuilder()
+
+        final_artifact = builder.assemble_weekly_post(
+            briefing=global_briefing,
+            lenses=multi_lens_analysis,
+            articles_df=analysis_articles_df,
+            config=self.config,
+            run_date=self.run_date,
+        )
+
+        # Save the Final Product
+        self.workspace.save_report(final_artifact.filename, final_artifact.content)
+
+        logger.info(f"<<< Phase 7 Complete. Final Product: {final_artifact.filename}")
 
     # ==========================================
     # Reconstruction Helpers (Re-hydration)
