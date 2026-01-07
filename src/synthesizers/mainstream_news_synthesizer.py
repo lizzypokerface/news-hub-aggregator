@@ -2,12 +2,31 @@ import logging
 import re
 from typing import List
 
-from interfaces import BaseSynthesizer
-from interfaces.models import MainstreamNarrative, MainstreamEventEntry
+from src.interfaces import BaseSynthesizer
+from src.interfaces.models import MainstreamNarrative, MainstreamEventEntry
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-3-Pro"
+MODEL_NAME = "Gemini-2.5-Pro"
+
+# Standard Region Order (14 Core + Unknown)
+REQUIRED_REGIONS = [
+    "Global",
+    "China",
+    "East Asia",
+    "Singapore",
+    "Southeast Asia",
+    "South Asia",
+    "Central Asia",
+    "Russia",
+    "West Asia (Middle East)",
+    "Africa",
+    "Europe",
+    "Latin America & Caribbean",
+    "North America",
+    "Oceania",
+    "Unknown",
+]
 
 # Adapted from regional_summarizer.py to focus strictly on mainstream reporting
 MAINSTREAM_PROMPT_TEMPLATE = """
@@ -69,9 +88,9 @@ class MainstreamNewsSynthesizer(BaseSynthesizer):
         # Sanity check for empty content
         if not mainstream_content or len(mainstream_content) < 50:
             logger.warning("Mainstream content too short or empty.")
-            return MainstreamNarrative(entries=[])
+            return MainstreamNarrative(entries=self._create_empty_entries())
 
-        # Truncate to safety limit if necessary, though Gemini handles large context well
+        # Truncate to safety limit if necessary
         prompt = MAINSTREAM_PROMPT_TEMPLATE.format(
             input_text=mainstream_content[:500000]
         )
@@ -85,11 +104,14 @@ class MainstreamNewsSynthesizer(BaseSynthesizer):
             # Parse Response
             entries = self._parse_llm_output(response_text)
 
-            return MainstreamNarrative(entries=entries)
+            # Validation Step: Ensure all regions are present
+            final_entries = self._validate_and_fill_regions(entries)
+
+            return MainstreamNarrative(entries=final_entries)
 
         except Exception as e:
             logger.error(f"Mainstream Synthesis failed: {e}")
-            return MainstreamNarrative(entries=[])
+            return MainstreamNarrative(entries=self._create_empty_entries())
 
     def _parse_llm_output(self, text: str) -> List[MainstreamEventEntry]:
         """
@@ -110,3 +132,45 @@ class MainstreamNewsSynthesizer(BaseSynthesizer):
                 )
 
         return entries
+
+    def _validate_and_fill_regions(
+        self, entries: List[MainstreamEventEntry]
+    ) -> List[MainstreamEventEntry]:
+        """
+        Ensures all 15 required regions are present.
+        Logs warnings for missing regions and fills them with placeholders.
+        Returns a sorted list of entries matching the REQUIRED_REGIONS order.
+        """
+        # Map existing entries by region name for quick lookup
+        existing_map = {e.region: e for e in entries}
+        final_list = []
+        missing_regions = []
+
+        for region in REQUIRED_REGIONS:
+            if region in existing_map:
+                final_list.append(existing_map[region])
+            else:
+                # Region missing: Log it and create placeholder
+                missing_regions.append(region)
+                final_list.append(
+                    MainstreamEventEntry(
+                        region=region,
+                        summary_text="*No mainstream reporting found for this region.*",
+                    )
+                )
+
+        if missing_regions:
+            logger.info(
+                f"Mainstream Narrative Missing Regions (Auto-filled): {len(missing_regions)} regions"
+            )
+
+        return final_list
+
+    def _create_empty_entries(self) -> List[MainstreamEventEntry]:
+        """Helper to create a fully empty dataset if generation fails."""
+        return [
+            MainstreamEventEntry(
+                region=r, summary_text="*No data available due to processing error.*"
+            )
+            for r in REQUIRED_REGIONS
+        ]
