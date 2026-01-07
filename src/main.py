@@ -3,9 +3,11 @@ import sys
 import os
 
 from legacy_modules.config_manager import ConfigManager
-from services.global_news_aggregator import GlobalNewsAggregator
-from services.historical_materialist_researcher import HistoricalMaterialistResearcher
-from services.news_summariser import NewsSummariser
+from legacy_modules.global_news_aggregator import GlobalNewsAggregator
+from legacy_modules.historical_materialist_researcher import (
+    HistoricalMaterialistResearcher,
+)
+from legacy_modules.news_summariser import NewsSummariser
 
 
 def main():

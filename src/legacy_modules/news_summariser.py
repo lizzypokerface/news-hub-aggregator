@@ -1,6 +1,4 @@
-# DEPRECATION NOTICE:
-# This file is marked for deprecation and will be removed in a future release.
-# Please migrate to the new summarization service as soon as possible.
+# Legacy module: retained for compatibility and slated for migration or deprecation.
 
 import logging
 import os
