@@ -2,8 +2,8 @@ import logging
 from typing import List, Dict, Any
 from datetime import datetime
 
-from modules.csv_handler import CSVHandler
-from modules.content_extractor import ContentExtractor
+from legacy_modules.csv_handler import CSVHandler
+from legacy_modules.content_extractor import ContentExtractor
 from reporters.markdown_report_builder import MarkdownReportBuilder
 from interfaces.models import Article, ReportArtifact
 

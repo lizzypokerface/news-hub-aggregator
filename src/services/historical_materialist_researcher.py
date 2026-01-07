@@ -3,8 +3,8 @@ import logging
 import re
 from datetime import datetime
 from typing import List
-from modules.content_extractor import ContentExtractor
-from modules.llm_client import LLMClient
+from legacy_modules.content_extractor import ContentExtractor
+from legacy_modules.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 

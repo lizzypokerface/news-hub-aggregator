@@ -1,4 +1,4 @@
-# regional_summarizer.py
+# Legacy module: retained for compatibility and slated for migration or deprecation.
 
 import logging
 import time

@@ -9,12 +9,12 @@ from datetime import datetime
 import pandas as pd
 
 # --- Import Custom Modules ---
-from modules.headline_synthesizer import HeadlineSynthesizer
-from modules.regional_summariser import RegionalSummariser
-from modules.link_collector import LinkCollector
-from modules.title_fetcher import TitleFetcher
-from modules.region_categoriser import RegionCategoriser
-from modules.markdown_generator import MarkdownGenerator
+from legacy_modules.headline_synthesizer import HeadlineSynthesizer
+from legacy_modules.regional_summariser import RegionalSummariser
+from legacy_modules.link_collector import LinkCollector
+from legacy_modules.title_fetcher import TitleFetcher
+from legacy_modules.region_categoriser import RegionCategoriser
+from legacy_modules.markdown_generator import MarkdownGenerator
 
 
 class GlobalNewsAggregator:

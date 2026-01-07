@@ -2,7 +2,7 @@ import pandas as pd
 import logging
 from typing import List
 from interfaces import BaseConsolidator
-from modules.csv_handler import CSVHandler
+from legacy_modules.csv_handler import CSVHandler
 from interfaces.models import AnalysisHeadlines, SourceHeadlines
 
 logger = logging.getLogger(__name__)

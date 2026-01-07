@@ -1,3 +1,5 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 import os
 from typing import Any, Dict, List
@@ -6,7 +8,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
-from modules.csv_handler import CSVHandler
+from legacy_modules.csv_handler import CSVHandler
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

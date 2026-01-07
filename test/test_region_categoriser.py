@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from modules.region_categoriser import RegionCategoriser
+from legacy_modules.region_categoriser import RegionCategoriser
 
 # --- Fixtures ---
 

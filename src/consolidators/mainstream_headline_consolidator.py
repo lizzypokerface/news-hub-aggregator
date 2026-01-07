@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError
 
 from interfaces import BaseConsolidator
 from interfaces.models import MainstreamSourceEntry, MainstreamHeadlines
-from modules.content_extractor import ContentExtractor
+from legacy_modules.content_extractor import ContentExtractor
 
 logger = logging.getLogger(__name__)
 

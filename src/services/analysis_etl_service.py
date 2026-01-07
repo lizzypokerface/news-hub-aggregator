@@ -2,9 +2,9 @@ import logging
 import os
 from typing import Dict, Any
 
-from modules.link_collector import LinkCollector
-from modules.title_fetcher import TitleFetcher
-from modules.region_categoriser import RegionCategoriser
+from legacy_modules.link_collector import LinkCollector
+from legacy_modules.title_fetcher import TitleFetcher
+from legacy_modules.region_categoriser import RegionCategoriser
 
 logger = logging.getLogger(__name__)
 

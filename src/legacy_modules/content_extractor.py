@@ -1,3 +1,5 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 import re
 import time
@@ -17,7 +19,7 @@ from youtube_transcript_api import (
     NoTranscriptFound,
 )
 
-from modules.youtube_transcript_api_handler import YoutubeTranscriptApiHandler
+from legacy_modules.youtube_transcript_api_handler import YoutubeTranscriptApiHandler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import logging
 import sys
 import os
 
-from modules.config_manager import ConfigManager
+from legacy_modules.config_manager import ConfigManager
 from services.global_news_aggregator import GlobalNewsAggregator
 from services.historical_materialist_researcher import HistoricalMaterialistResearcher
 from services.news_summariser import NewsSummariser

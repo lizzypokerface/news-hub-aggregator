@@ -6,8 +6,8 @@ import pandas as pd
 
 # Core Interfaces & Config
 from interfaces import BaseOrchestrator
-from modules.llm_client import LLMClient
-from src.modules.csv_handler import CSVHandler
+from legacy_modules.llm_client import LLMClient
+from legacy_modules.csv_handler import CSVHandler
 
 # Services
 from services.analysis_etl_service import AnalysisETLService
