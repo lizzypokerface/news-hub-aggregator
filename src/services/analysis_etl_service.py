@@ -6,6 +6,11 @@ from legacy_modules.link_collector import LinkCollector
 from legacy_modules.title_fetcher import TitleFetcher
 from legacy_modules.region_categoriser import RegionCategoriser
 
+STAGE_01_FILENAME = "stage_01_raw_articles_links.csv"
+STAGE_02_FILENAME = "stage_02_enriched_articles_titles.csv"
+STAGE_03_FILENAME = "stage_03_enriched_articles_regions.csv"
+INPUT_ARTICLE_LINKS_FILENAME = "input_article_links.txt"
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,13 +44,13 @@ class AnalysisETLService:
         logger.info(">>> Starting Analysis ETL Pipeline...")
 
         # --- Step 1: Link Collection ---
-        p1_path = os.path.join(self.workspace_dir, "p1_articles_w_links.csv")
+        stage_01_path = os.path.join(self.workspace_dir, STAGE_01_FILENAME)
 
         collector = LinkCollector(
             sources=self.config.get("sources", []),
             input_directory=self.input_dir,
-            input_file="raw_links.txt",
-            persistence_path=p1_path,
+            input_file=INPUT_ARTICLE_LINKS_FILENAME,
+            persistence_path=stage_01_path,
         )
 
         # Returns dataframe of collected links
@@ -55,7 +60,7 @@ class AnalysisETLService:
             logger.warning("No links collected. ETL stopping.")
             return ""
 
-        logger.info(f"Phase 1 Complete. Saved to: {p1_path}")
+        logger.info(f"Phase 1 Complete. Saved to: {stage_01_path}")
 
         # --- Step 2: Title Fetching ---
         logger.info("Starting Phase 2: Title Fetching...")
@@ -66,9 +71,9 @@ class AnalysisETLService:
             logger.warning("Title fetching produced no results.")
             return ""
 
-        p2_path = os.path.join(self.workspace_dir, "p2_articles_w_links_titles.csv")
-        df_with_titles.to_csv(p2_path, index=False)
-        logger.info(f"Phase 2 Complete. Saved to: {p2_path}")
+        stage_02_path = os.path.join(self.workspace_dir, STAGE_02_FILENAME)
+        df_with_titles.to_csv(stage_02_path, index=False)
+        logger.info(f"Phase 2 Complete. Saved to: {stage_02_path}")
 
         # --- Step 3: Region Categorization ---
         logger.info("Starting Phase 3: Region Categorization...")
@@ -90,10 +95,8 @@ class AnalysisETLService:
 
         df_with_titles["region"] = regions
 
-        p3_path = os.path.join(
-            self.workspace_dir, "p3_articles_w_links_titles_regions.csv"
-        )
-        df_with_titles.to_csv(p3_path, index=False)
-        logger.info(f"Phase 3 Complete. Final Dataset: {p3_path}")
+        stage_03_path = os.path.join(self.workspace_dir, STAGE_03_FILENAME)
+        df_with_titles.to_csv(stage_03_path, index=False)
+        logger.info(f"Phase 3 Complete. Final Dataset: {stage_03_path}")
 
-        return p3_path
+        return stage_03_path

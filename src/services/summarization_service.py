@@ -13,6 +13,8 @@ from src.interfaces.models import Article, ReportArtifact
 # Generators
 from src.generators.intel_brief_generator import IntelBriefGenerator
 
+CHECKPOINT_FILENAME = "stage_04_enriched_articles_summarized.jsonl"
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +42,7 @@ class SummarizationService:
         # 1. Setup Checkpoint File
         # We create a checkpoint file in the same directory as the input CSV
         base_dir = os.path.dirname(csv_path)
-        checkpoint_path = os.path.join(base_dir, "p4_articles_enriched.jsonl")
+        checkpoint_path = os.path.join(base_dir, CHECKPOINT_FILENAME)
 
         # Load existing progress
         processed_cache = self._load_checkpoint(checkpoint_path)

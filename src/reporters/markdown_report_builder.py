@@ -117,7 +117,7 @@ class MarkdownReportBuilder:
         """
         date_str = run_date.strftime("%Y-%m-%d")
         title = f"Materialist Analysis Report ({date_str})"
-        filename = f"{date_str}-materialist_analysis_report.md"
+        filename = f"{date_str}-materialist_analysis.md"
 
         md_buffer = []
         md_buffer.append(self._h1(title))
