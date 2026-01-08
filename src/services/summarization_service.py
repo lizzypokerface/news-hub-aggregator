@@ -7,11 +7,11 @@ from dataclasses import asdict
 
 from legacy_modules.csv_handler import CSVHandler
 from legacy_modules.content_extractor import ContentExtractor
-from src.reporters.markdown_report_builder import MarkdownReportBuilder
-from src.interfaces.models import Article, ReportArtifact
+from reporters.markdown_report_builder import MarkdownReportBuilder
+from interfaces.models import Article, ReportArtifact
 
 # Generators
-from src.generators.intel_brief_generator import IntelBriefGenerator
+from generators.intel_brief_generator import IntelBriefGenerator
 
 CHECKPOINT_FILENAME = "stage_04_enriched_articles_summarized.jsonl"
 

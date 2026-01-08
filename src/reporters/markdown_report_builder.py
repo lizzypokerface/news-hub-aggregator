@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 
-from src.interfaces.models import (
+from interfaces.models import (
     AnalysisHeadlines,
     MainstreamHeadlines,
     MaterialistAnalyses,
@@ -13,7 +13,7 @@ from src.interfaces.models import (
     MultiLensAnalysis,
     MainstreamNarrative,
 )
-from markdown_formatter import MarkdownFormatter
+from reporters.markdown_formatter import MarkdownFormatter
 
 logger = logging.getLogger(__name__)
 

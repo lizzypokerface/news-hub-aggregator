@@ -75,7 +75,7 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # The Manager handles all State and IO
         self.workspace = WorkspaceManager(workspace_path)
 
-        logger.info(f"Intel Pipeline Initialized. Workspace: {self.workspace_dir}")
+        logger.info(f"Intel Pipeline Initialized. Workspace: {workspace_path}")
 
     def run(self) -> None:
         """Executes the full manufacturing sequence."""

@@ -2,12 +2,12 @@ import logging
 import re
 from typing import List
 
-from src.interfaces import BaseSynthesizer
-from src.interfaces.models import MainstreamNarrative, MainstreamEventEntry
+from interfaces import BaseSynthesizer
+from interfaces.models import MainstreamNarrative, MainstreamEventEntry
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-2.5-Pro"
+MODEL_NAME = "Gemini-2.5-Flash"
 
 # Standard Region Order (14 Core + Unknown)
 REQUIRED_REGIONS = [

@@ -3,13 +3,13 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, Any
 
-from src.interfaces.models import (
+from interfaces.models import (
     GlobalBriefing,
     MultiLensAnalysis,
     ReportArtifact,
 )
 
-from markdown_formatter import MarkdownFormatter
+from reporters.markdown_formatter import MarkdownFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +93,8 @@ class NewsPostBuilder:
                     briefing_entry.mainstream_narrative
                 )
                 content.append(f"{clean_text}\n")
+
+            # NOTE: Add the non-mainstream analysis too.
 
             # D. Multi-Lens Dropdowns
             if lens_entry and lens_entry.lenses:
