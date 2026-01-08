@@ -65,7 +65,7 @@ class NewsPostBuilder:
 
         # 2. Navigation Bar
         content.append(self._build_navigation())
-        content.append("\n---\n")
+        content.append("")
 
         # 3. Process Regions
         briefing_map = {e.region: e for e in briefing.entries}
@@ -87,14 +87,23 @@ class NewsPostBuilder:
             slug = MarkdownFormatter.slugify(region_key)
             content.append(f"# {region_display} <a id='{slug}'></a>\n")
 
-            # C. Mainstream Narrative
-            if briefing_entry and briefing_entry.mainstream_narrative:
-                clean_text = MarkdownFormatter.clean_text(
-                    briefing_entry.mainstream_narrative
-                )
-                content.append(f"{clean_text}\n")
+            # C. Briefing Narratives (Mainstream + Strategic)
+            if briefing_entry:
+                # Mainstream
+                if briefing_entry.mainstream_narrative:
+                    clean_ms = MarkdownFormatter.clean_text(
+                        briefing_entry.mainstream_narrative
+                    )
+                    content.append(f"**Mainstream Narrative:** {clean_ms}\n")
 
-            # NOTE: Add the non-mainstream analysis too.
+                content.append("")
+
+                # Strategic
+                if briefing_entry.strategic_analysis:
+                    clean_strat = MarkdownFormatter.clean_text(
+                        briefing_entry.strategic_analysis
+                    )
+                    content.append(f"**Strategic Analysis:** {clean_strat}\n")
 
             # D. Multi-Lens Dropdowns
             if lens_entry and lens_entry.lenses:
@@ -145,20 +154,43 @@ class NewsPostBuilder:
         return ReportArtifact(content=final_markdown, filename=filename)
 
     def _build_navigation(self) -> str:
+        """
+        Constructs a horizontal navigation bar using HTML with inline CSS
+        to create a clean, button-like layout.
+        """
         links = []
+
+        # Inline CSS to mimic a simple Bootstrap "light" button
+        # This ensures the buttons look good even without external stylesheets.
+        btn_style = (
+            "display: inline-block; "
+            "padding: 6px 12px; "
+            "margin: 4px; "
+            "background-color: #f8f9fa; "  # Light gray background
+            "border: 1px solid #ddd; "  # Subtle border
+            "border-radius: 5px; "  # Rounded corners
+            "text-decoration: none; "  # Remove default underline
+            "color: #333; "  # Dark text
+            "font-weight: 500; "
+            "font-size: 0.9em;"
+        )
+
+        # 1. Generate Region Buttons
         for region in REGION_HEADINGS.keys():
             slug = MarkdownFormatter.slugify(region)
-            links.append(f"[{region}](#{slug})")
+            links.append(f'<a href="#{slug}" style="{btn_style}">{region}</a>')
 
-        links.append("[In-Depth Analysis](#in-depth-analysis)")
+        # 2. Add In-Depth Analysis Button
+        links.append(
+            f'<a href="#in-depth-analysis" style="{btn_style}">In-Depth Analysis</a>'
+        )
 
-        lines = []
-        chunk_size = 7
-        for i in range(0, len(links), chunk_size):
-            chunk = links[i : i + chunk_size]
-            lines.append(" | ".join(chunk))
+        # 3. Join and wrap in a centered container
+        # We use a centered div to layout the buttons horizontally
+        nav_html = "\n".join(links)
 
-        return "**Navigate:** \n" + "  \n".join(lines)
+        return f"""<div style="text-align: center; margin: 20px 0;">{nav_html}</div>
+    """
 
     def _build_sources_footer(self, config: Dict[str, Any]) -> str:
         sources = config.get("sources", [])
@@ -168,17 +200,17 @@ class NewsPostBuilder:
         def fmt_source(s):
             return MarkdownFormatter.link(s.get("name", "Link"), s.get("url", "#"))
 
-        footer = [MarkdownFormatter.h3("Sources"), "<small>"]
+        footer = [MarkdownFormatter.h3("Sources")]
 
+        # Using subscript <sub> to make text appear smaller without using <small>
         if datapoints:
             links = ", ".join([fmt_source(s) for s in datapoints])
-            footer.append(f"**Datapoints:** {links}  ")
-
+            footer.append(f"**Mainstream Narratives:** {links}")
+        footer.append("")
         if analysis:
             links = ", ".join([fmt_source(s) for s in analysis])
-            footer.append(f"**Analysis:** {links}")
+            footer.append(f"**Strategic Analyses:** {links}")
 
-        footer.append("</small>")
         return "\n".join(footer)
 
     def _format_article_line(self, row: pd.Series) -> str:
