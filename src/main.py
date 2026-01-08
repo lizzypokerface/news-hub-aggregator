@@ -1,100 +1,92 @@
-import logging
-import sys
 import os
+import sys
+import logging
+import argparse
+from datetime import datetime
+
 
 from legacy_modules.config_manager import ConfigManager
-from legacy_modules.global_news_aggregator import GlobalNewsAggregator
-from legacy_modules.historical_materialist_researcher import (
-    HistoricalMaterialistResearcher,
-)
-from legacy_modules.news_summariser import NewsSummariser
+from legacy_modules.llm_client import LLMClient
+from orchestrators.WeeklyIntelOrchestrator import WeeklyIntelOrchestrator
+
+
+def setup_logging(level=logging.INFO):
+    """Configures the root logger with a standard format."""
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
 
 
 def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler()],
+    # 1. Argument Parsing
+    parser = argparse.ArgumentParser(
+        description="Weekly Intelligence Manufacturing Plant"
     )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="../config.yaml",
+        help="Path to the configuration YAML file.",
+    )
+    parser.add_argument(
+        "--date",
+        type=str,
+        help="Force a specific run date (Format: YYYY-MM-DD). Defaults to today.",
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+
+    args = parser.parse_args()
+
+    # 2. Setup Logging
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    setup_logging(log_level)
     logger = logging.getLogger(__name__)
 
+    logger.info("Initializing Weekly Intelligence Pipeline...")
+
     try:
-        config_manager = ConfigManager("../config.yaml")
+        # 3. Handle Date
+        run_date = datetime.now()
+        if args.date:
+            try:
+                run_date = datetime.strptime(args.date, "%Y-%m-%d")
+                logger.info(
+                    f"Manual override: Running for date {run_date.strftime('%Y-%m-%d')}"
+                )
+            except ValueError:
+                logger.error("Invalid date format. Please use YYYY-MM-DD.")
+                sys.exit(1)
+
+        # 4. Load Configuration
+        if not os.path.exists(args.config):
+            logger.error(f"Config file not found: {args.config}")
+            sys.exit(1)
+
+        config_manager = ConfigManager(args.config)
         config = config_manager.data
+        logger.info(f"Configuration loaded from {args.config}")
 
-        # ----------------------------------------
-        # 3. User Selection Interface
-        # ----------------------------------------
-        print("\n" + "=" * 50)
-        print(" NEWSHUB: GLOBAL INTELLIGENCE")
-        print("=" * 50)
-        print("1. Generate Regional Briefing (YouTube/Poe Synthesis)")
-        print("2. Generate Weekly News Post (ETL + Markdown)")
-        print("3. Batch Summarization (By Region or Source)")
-        print("4. Targeted Research (Deep Dive Analysis)")
-        print("=" * 50)
+        # 5. Initialize Services
+        llm_client = LLMClient(config)
 
-        choice = input("Select Mode (1-4): ").strip()
+        # 6. Initialize Orchestrator
+        orchestrator = WeeklyIntelOrchestrator(
+            config=config, llm_client=llm_client, run_date=run_date
+        )
 
-        # ----------------------------------------
-        # 4. Execute Selected Workflow
-        # ----------------------------------------
+        # 7. Execute Pipeline
+        logger.info(">>> STARTING ORCHESTRATOR <<<")
+        orchestrator.run()
+        logger.info(">>> ORCHESTRATOR FINISHED <<<")
 
-        if choice == "1":
-            logger.info("Mode Selected: Regional Briefing Generation")
-            aggregator = GlobalNewsAggregator(config)
-            aggregator.generate_regional_briefing()
-
-        elif choice == "2":
-            logger.info("Mode Selected: Weekly News Post Generation")
-            aggregator = GlobalNewsAggregator(config)
-            aggregator.run_news_etl()
-            aggregator.construct_news_post()
-
-        elif choice == "3":
-            logger.info("Mode Selected: Batch Summarization")
-
-            # 1. Ask for Mode
-            print("\nSummarize by:")
-            print("1. Region (e.g., compile all 'China' articles)")
-            print("2. Source (e.g., compile all 'The New Atlas' articles)")
-            sub_choice = input("Select (1 or 2): ").strip()
-
-            mode = "region" if sub_choice == "1" else "source"
-
-            # 2. Ask for Filter
-            print(f"\nEnter specific {mode} name to filter (e.g., 'China').")
-            print("Or press Enter to summarize ALL.")
-            filter_key = input("Filter: ").strip()
-            if filter_key == "":
-                filter_key = None  # None implies "All"
-
-            # 3. Define Input Path
-            input_csv = os.path.join(
-                config.get("output_directory", "outputs"),
-                "p3_articles_with_regions.csv",
-            )
-
-            # 4. Run
-            summariser = NewsSummariser(config)
-            summariser.batch_summarize(input_csv, mode, filter_key)
-
-        elif choice == "4":
-            input_dir = config.get("input_directory", "inputs")
-            links_file = os.path.join(input_dir, "research_links.txt")
-
-            if not os.path.exists(links_file):
-                pass
-
-            researcher = HistoricalMaterialistResearcher(config)
-            researcher.conduct_research(manual_review=True)
-
-        else:
-            logger.warning(f"Invalid selection: '{choice}'. Exiting.")
-            sys.exit(0)
-
+    except KeyboardInterrupt:
+        logger.warning("\nPipeline interrupted by user.")
+        sys.exit(0)
     except Exception as e:
-        logger.critical(f"Critical Error: {e}", exc_info=True)
+        logger.critical(f"Fatal error in main loop: {e}", exc_info=True)
         sys.exit(1)
 
 
