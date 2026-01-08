@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 MINIMUM_CONTENT_LENGTH = 150
-MODEL_NAME = "Gemini-3-Flash"  # Fast, efficient model for summarization
+MODEL_NAME = "Gemini-2.5-Flash"  # Fast, efficient model for summarization
 
 SUMMARY_PROMPT_TEMPLATE = """
 **Role:** You are an elite Intelligence Analyst processing raw source documents for a high-level decision-maker.

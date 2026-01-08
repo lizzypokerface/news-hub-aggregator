@@ -7,7 +7,7 @@ from interfaces.models import MultiLensAnalysis, MultiLensRegionEntry, LensAnaly
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-3-Pro"
+MODEL_NAME = "Gemini-2.5-Pro"
 
 # Standard Region Order
 REQUIRED_REGIONS = [

@@ -7,7 +7,7 @@ from interfaces.models import MainstreamNarrative, MainstreamEventEntry
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-2.5-Flash"
+MODEL_NAME = "Gemini-2.5-Pro"
 
 # Standard Region Order (14 Core + Unknown)
 REQUIRED_REGIONS = [
