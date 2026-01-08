@@ -97,7 +97,7 @@ class SummarizationService:
 
                 article = Article(
                     title=title,
-                    source_name=source,
+                    source=source,
                     url=url,
                     raw_content=raw_text,
                     date_collected=datetime.now(),
@@ -117,7 +117,7 @@ class SummarizationService:
             # We build the report using ALL articles (both cached and new)
             report_title = f"{style.replace('_', ' ').title()} - {group_name_str}"
 
-            artifact = self.builder.build_intel_brief_report(
+            artifact = self.builder.build_summary_report(
                 report_title=report_title,
                 articles=group_articles,
                 run_date=datetime.now(),

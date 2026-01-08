@@ -68,11 +68,20 @@ class WorkspaceManager:
             return None
 
     def save_report(self, filename: str, content: str):
-        """Saves a human-readable Markdown report."""
+        """
+        Saves a human-readable Markdown report.
+        Automatically creates subdirectories if the filename contains paths (e.g., 'summaries/report.md').
+        """
         path = os.path.join(self.workspace_dir, filename)
+
         try:
+            # Ensure the directory exists (handles subfolders like 'summaries/')
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
+
+            # We only add the base filename or relative path to the cache
             self.existing_files.add(filename)
             logger.info(f"Report Saved: {filename}")
         except Exception as e:
@@ -84,3 +93,10 @@ class WorkspaceManager:
             with open(path, encoding="utf-8") as f:
                 return f.read()
         return ""
+
+    def get_file_path(self, filename: str) -> str:
+        """
+        Returns the absolute path for a file in the workspace.
+        Useful for passing paths to services that require file inputs.
+        """
+        return os.path.join(self.workspace_dir, filename)

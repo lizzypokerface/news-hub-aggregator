@@ -137,9 +137,11 @@ class MarkdownReportBuilder:
 
         for article in articles:
             md_buffer.append(MarkdownFormatter.h2(article.title))
-            md_buffer.append(f"**Source:** {article.source_name}")
+            md_buffer.append(f"**Collected at:** {article.date_collected}")
+            md_buffer.append("")
+            md_buffer.append(f"**Source:** {article.source}")
+            md_buffer.append("")
             md_buffer.append(f"**URL:** {article.url}")
-            md_buffer.append(f"**Collected:** {article.date_collected}")
             md_buffer.append("")
 
             content = article.summary if article.summary else "_No summary generated_"

@@ -198,28 +198,34 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # Currently, SummarizationService manages its own granular JSONL checkpointing logic
         # (stage_04_enriched_articles_summarized.jsonl) instead of using the central manager.
 
-        csv_path = os.path.join(
-            self.config.get("output_directory", "outputs"),
-            "stage_03_enriched_articles_regions.csv",
-        )
+        # Resolve Input Path
+        csv_filename = "stage_03_enriched_articles_regions.csv"
+        csv_path = self.workspace.get_file_path(csv_filename)
 
+        if not os.path.exists(csv_path):
+            logger.warning(
+                f"   [FAIL] Input CSV not found at {csv_path}. Skipping Phase 3."
+            )
+            return
+
+        # 3.1 Run Summarization Service
+        # The service manages its own granular checkpointing (JSONL) internally
         service = SummarizationService(self.config, self.llm_client)
 
-        # Run Batch Processing (Region Mode)
         artifacts = service.run_batch_summarization(
             csv_path=csv_path, mode="region", style="intel_brief"
         )
 
-        # Save summaries to 'Summaries' subfolder
-        summaries_dir = os.path.join(self.workspace_dir, "summaries")
-        os.makedirs(summaries_dir, exist_ok=True)
+        if not artifacts:
+            logger.info("   [INFO] No summaries generated.")
+            return
 
+        # Save Outputs
         for art in artifacts:
-            # We treat these as reports too, but save to subfolder
-            path = os.path.join(summaries_dir, art.filename)
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(art.content)
-            logger.info(f"Summary Saved: {art.filename}")
+            relative_path = os.path.join("summaries", art.filename)
+            self.workspace.save_report(relative_path, art.content)
+
+        logger.info("<<< Phase 3 Complete")
 
     # ==========================================
     # Phase 4: Materialist Analysis (The Deep Dive)
