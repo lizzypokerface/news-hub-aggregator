@@ -70,23 +70,23 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # Workspace: outputs/W{Week}-{YYYY-MM-DD}
         week_str = self.run_date.strftime("W%U-%Y-%m-%d")
         base_output = self.config.get("output_directory", "outputs")
-        workspace_path = os.path.join(base_output, week_str)
+        self.workspace_path = os.path.join(base_output, week_str)
 
         # The Manager handles all State and IO
-        self.workspace = WorkspaceManager(workspace_path)
+        self.workspace = WorkspaceManager(self.workspace_path)
 
-        logger.info(f"Intel Pipeline Initialized. Workspace: {workspace_path}")
+        logger.info(f"Intel Pipeline Initialized. Workspace: {self.workspace_path}")
 
     def run(self) -> None:
         """Executes the full manufacturing sequence."""
         try:
             self.run_phase_1_global_overview()
-            self.run_phase_2_news_etl()
-            self.run_phase_3_summarization()
-            self.run_phase_4_materialist_analysis()
-            self.run_phase_5_global_briefing()
-            self.run_phase_6_multi_lens_analysis()
-            self.run_phase_7_final_assembly()
+            # self.run_phase_2_news_etl()
+            # self.run_phase_3_summarization()
+            # self.run_phase_4_materialist_analysis()
+            # self.run_phase_5_global_briefing()
+            # self.run_phase_6_multi_lens_analysis()
+            # self.run_phase_7_final_assembly()
             logger.info(">>> Pipeline Execution Successful.")
         except Exception as e:
             logger.critical(f"Pipeline Halted: {e}", exc_info=True)
@@ -168,7 +168,7 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # Currently, AnalysisETLService handles its own file persistence and backups internally.
 
         # 2.1 Run Analysis ETL Service
-        etl_service = AnalysisETLService(self.config, self.workspace_dir)
+        etl_service = AnalysisETLService(self.config, self.workspace_path)
         final_csv_path = etl_service.run_etl()
 
         if not final_csv_path or not os.path.exists(final_csv_path):
@@ -184,16 +184,7 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         artifact = builder.build_consolidated_analysis_headlines_report(
             data, self.run_date
         )
-        self._save_report(artifact)
-
-        # 2.3 Load Data into Memory for downstream phases
-        try:
-            self.analysis_articles_df = CSVHandler.load_as_dataframe(final_csv_path)
-            logger.info(
-                f"Loaded {len(self.analysis_articles_df)} articles into memory."
-            )
-        except Exception as e:
-            logger.error(f"Failed to load articles DataFrame: {e}")
+        self.workspace.save_report(artifact.filename, artifact.content)
 
         logger.info("<<< Phase 2 Complete")
 
