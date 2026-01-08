@@ -261,13 +261,10 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
 
         KEY_GLOBAL_BRIEFING = "p5_global_briefing"
 
-        # Check for Checkpoint
-        if self.workspace.has_checkpoint(KEY_GLOBAL_BRIEFING):
-            logger.info("   [SKIP] 5.1 Global Briefing found in checkpoint. Loading...")
-            data = self.workspace.load_checkpoint_json(KEY_GLOBAL_BRIEFING)
-            if data:
-                self.global_briefing = self._reconstruct_global_briefing(data)
-            return
+        # FUTURE WORK: Refactor Synthesizers to accept Data Objects.
+        # Currently, we save checkpoint files (JSON) but do not use them to skip execution
+        # because the Synthesizers require raw text input from the Markdown reports.
+        # Once Synthesizers accept objects, we can restore the checkpoint check here.
 
         # Load Inputs
         date_str = self.run_date.strftime("%Y-%m-%d")
@@ -310,15 +307,10 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
 
         KEY_MULTI_LENS = "p6_multi_lens_analysis"
 
-        # Check for Checkpoint
-        if self.workspace.has_checkpoint(KEY_MULTI_LENS):
-            logger.info(
-                "   [SKIP] 6.1 Multi-Lens Analysis found in checkpoint. Loading..."
-            )
-            data = self.workspace.load_checkpoint_json(KEY_MULTI_LENS)
-            if data:
-                self.multi_lens_analysis = self._reconstruct_multi_lens_analysis(data)
-            return
+        # FUTURE WORK: Refactor Synthesizers to accept Data Objects.
+        # Currently, we save checkpoint files (JSON) but do not use them to skip execution
+        # because the Synthesizers require raw text input from the Markdown reports.
+        # Once Synthesizers accept objects, we can restore the checkpoint check here.
 
         # Load Inputs (Same as Phase 5)
         date_str = self.run_date.strftime("%Y-%m-%d")
