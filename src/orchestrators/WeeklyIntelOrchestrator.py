@@ -81,12 +81,12 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         """Executes the full manufacturing sequence."""
         try:
             self.run_phase_1_global_overview()
-            # self.run_phase_2_news_etl()
-            # self.run_phase_3_summarization()
-            # self.run_phase_4_materialist_analysis()
-            # self.run_phase_5_global_briefing()
-            # self.run_phase_6_multi_lens_analysis()
-            # self.run_phase_7_final_assembly()
+            self.run_phase_2_news_etl()
+            self.run_phase_3_summarization()
+            self.run_phase_4_materialist_analysis()
+            self.run_phase_5_global_briefing()
+            self.run_phase_6_multi_lens_analysis()
+            self.run_phase_7_final_assembly()
             logger.info(">>> Pipeline Execution Successful.")
         except Exception as e:
             logger.critical(f"Pipeline Halted: {e}", exc_info=True)
