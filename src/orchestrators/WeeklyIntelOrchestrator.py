@@ -83,6 +83,9 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         """Executes the full manufacturing sequence."""
         try:
             self.run_phase_1_global_overview()
+            input(
+                "   [PAUSE] Please review the Phase 1 output in your workspace. Press Enter to proceed to Phase 2."
+            )
             self.run_phase_2_news_etl()
             self.run_phase_3_summarization()
             self.run_phase_4_materialist_analysis()
