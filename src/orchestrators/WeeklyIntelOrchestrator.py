@@ -1,5 +1,6 @@
 import os
 import logging
+import yaml
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -74,8 +75,10 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
 
         # The Manager handles all State and IO
         self.workspace = WorkspaceManager(self.workspace_path)
-
         logger.info(f"Intel Pipeline Initialized. Workspace: {self.workspace_path}")
+
+        self._backup_config()
+        logger.info("Config backed up to workspace.")
 
     def run(self) -> None:
         """Executes the full manufacturing sequence."""
@@ -406,8 +409,10 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         logger.info(f"<<< Phase 7 Complete. Final Product: {final_artifact.filename}")
 
     # ==========================================
-    # Reconstruction Helpers (Re-hydration)
+    # Helpers
     # ==========================================
+
+    # Rehydration Helpers
     def _reconstruct_global_briefing(self, data: Dict[str, Any]) -> GlobalBriefing:
         """Helper to reconstruct GlobalBriefing object from JSON dictionary."""
         entries = [RegionalBriefingEntry(**e) for e in data.get("entries", [])]
@@ -436,3 +441,15 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         obj_date = datetime.fromisoformat(date_val) if date_val else self.run_date
 
         return MultiLensAnalysis(entries=reconstructed_entries, date=obj_date)
+
+    # Backup Helpers
+    def _backup_config(self):
+        """Saves a copy of the current configuration to the workspace."""
+        try:
+            backup_path = os.path.join(self.workspace_path, "config_backup.yaml")
+            with open(backup_path, "w", encoding="utf-8") as f:
+                # Dumps the config dict as a clean YAML file
+                yaml.dump(self.config, f, default_flow_style=False, sort_keys=False)
+            logger.info(f"   [BACKUP] Configuration saved to: {backup_path}")
+        except Exception as e:
+            logger.warning(f"   [WARN] Failed to backup config: {e}")
