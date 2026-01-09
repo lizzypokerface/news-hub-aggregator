@@ -57,7 +57,13 @@ class LLMClient:
             raise RuntimeError("Poe client not initialized. Check API key.")
 
         try:
-            logger.info(f"Querying Poe ({model})...")
+            # Metrics
+            char_len = len(prompt)
+            est_tokens = char_len // 4
+            logger.info(
+                f"Querying Poe ({model}) | Input Context: {char_len} chars (~{est_tokens} tokens)"
+            )
+
             response = self.poe_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
@@ -70,7 +76,13 @@ class LLMClient:
 
     def _query_ollama(self, prompt: str, model: str) -> str:
         try:
-            logger.info(f"Querying Ollama ({model})...")
+            # Metrics
+            char_len = len(prompt)
+            est_tokens = char_len // 4
+            logger.info(
+                f"Querying Ollama ({model}) | Input Context: {char_len} chars (~{est_tokens} tokens)"
+            )
+
             # Using LangChain implementation for Ollama as seen in your existing modules
             llm = Ollama(model=model, temperature=0.0)
             return llm.invoke(prompt)
