@@ -83,12 +83,24 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         """Executes the full manufacturing sequence."""
         try:
             self.run_phase_1_global_overview()
-            input(
-                "   [PAUSE] Please review the Phase 1 output in your workspace. Press Enter to proceed to Phase 2."
-            )
+            # Since this is a new workflow, we add manual review steps between major phases.
+            print("\n[REVIEW] Phase 1: Global Overview report has been generated:")
+            print(" - Mainstream Headlines and Narrative")
+            print(" - Geopolitical Ledger (Economic Snapshot)")
+            print("   Please review these outputs in your workspace before proceeding.")
+            input("Press Enter to continue to Phase 2 (News ETL)...")
             self.run_phase_2_news_etl()
             self.run_phase_3_summarization()
             self.run_phase_4_materialist_analysis()
+            # Since this is a new workflow, we add manual review steps between major phases.
+            print("\n[REVIEW] Key intermediate reports have been generated:")
+            print(" - Phase 2: Analysis Headlines (analysis_headlines.md)")
+            print(" - Phase 3: Summaries (summaries/...)")
+            print(" - Phase 4: Materialist Analysis (materialist_analysis.md)")
+            print("   Please review these outputs in your workspace before proceeding.")
+            input(
+                "Press Enter to continue to the final synthesis phases (Phases 5-7)..."
+            )
             self.run_phase_5_global_briefing()
             self.run_phase_6_multi_lens_analysis()
             self.run_phase_7_final_assembly()
