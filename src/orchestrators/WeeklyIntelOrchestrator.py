@@ -78,7 +78,6 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         logger.info(f"Intel Pipeline Initialized. Workspace: {self.workspace_path}")
 
         self._backup_config()
-        logger.info("Config backed up to workspace.")
 
     def run(self) -> None:
         """Executes the full manufacturing sequence."""
