@@ -7,7 +7,7 @@ from interfaces.models import MainstreamNarrative, MainstreamEventEntry
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "Gemini-2.5-Pro"
+MODEL_NAME = "Gemini-3-Flash"
 
 # Standard Region Order (14 Core + Unknown)
 REQUIRED_REGIONS = [
@@ -50,7 +50,6 @@ You are a Mainstream News Analyst. Your task is to synthesize a collection of he
     - 'Latin America & Caribbean': For countries in Central and South America, and the Caribbean.
     - 'North America': For the United States and Canada.
     - 'Oceania': For Australia, New Zealand, Pacific Islands.
-    - 'Unknown': Use ONLY if you cannot determine the region with confidence.
 
 **Region Order:** You MUST follow this strict order for the regions.
 ---

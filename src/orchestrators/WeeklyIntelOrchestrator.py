@@ -119,7 +119,12 @@ class WeeklyIntelOrchestrator(BaseOrchestrator):
         # --- 1.1 Mainstream Headlines (Raw) ---
         KEY_MS_HEADLINES = "p1_mainstream_headlines"
 
-        if self.workspace.has_checkpoint("p1_mainstream"):
+        # FUTURE WORK: Refactor so the MainstreamNewsSynthesizer rehydrates from checkpointed data.
+        ms_report_filename = (
+            self.run_date.strftime("%Y-%m-%d") + "-mainstream_headlines.md"
+        )
+
+        if self.workspace.has_checkpoint(KEY_MS_HEADLINES):
             logger.info("   [SKIP] 1.1 Mainstream Headlines found in checkpoint.")
 
         else:
