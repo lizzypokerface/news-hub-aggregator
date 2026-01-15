@@ -52,7 +52,7 @@ class NewsPostBuilder:
         date_str = run_date.strftime("%Y-%m-%d")
         display_date = run_date.strftime("%d %B %Y")
 
-        # 1. YAML Front Matter
+        # 1. YAML Front Matter & Top Anchor
         content = [
             "---",
             "layout: post",
@@ -60,6 +60,8 @@ class NewsPostBuilder:
             f"date:   {date_str} 08:00:00 +0800",
             "categories: weekly news",
             "---",
+            "",
+            "<a id='top'></a>",  # Anchor for 'Back to Top' buttons
             "",
         ]
 
@@ -115,6 +117,11 @@ class NewsPostBuilder:
                     content.append(dropdown)
                 content.append("<br>\n")
 
+            # Add Back to Top Button
+            if briefing_entry or (lens_entry and lens_entry.lenses):
+                content.append(self._build_back_to_top())
+                content.append("")
+
             # E. Article Links (Ranked)
             if not region_articles.empty:
                 region_articles["rank"] = pd.to_numeric(
@@ -144,6 +151,10 @@ class NewsPostBuilder:
                 content.append(self._format_article_line(row))
             content.append("")
 
+            # Add Back to Top Button for In-Depth section too
+            content.append(self._build_back_to_top())
+            content.append("")
+
         # 5. Sources Footer
         content.append("---")
         content.append(self._build_sources_footer(config))
@@ -155,22 +166,20 @@ class NewsPostBuilder:
 
     def _build_navigation(self) -> str:
         """
-        Constructs a horizontal navigation bar using HTML with inline CSS
-        to create a clean, button-like layout.
+        Constructs a horizontal navigation bar using HTML with inline CSS.
         """
         links = []
 
-        # Inline CSS to mimic a simple Bootstrap "light" button
-        # This ensures the buttons look good even without external stylesheets.
+        # Button Style
         btn_style = (
             "display: inline-block; "
             "padding: 6px 12px; "
             "margin: 4px; "
-            "background-color: #f8f9fa; "  # Light gray background
-            "border: 1px solid #ddd; "  # Subtle border
-            "border-radius: 5px; "  # Rounded corners
-            "text-decoration: none; "  # Remove default underline
-            "color: #333; "  # Dark text
+            "background-color: #f8f9fa; "
+            "border: 1px solid #ddd; "
+            "border-radius: 5px; "
+            "text-decoration: none; "
+            "color: #333; "
             "font-weight: 500; "
             "font-size: 0.9em;"
         )
@@ -178,6 +187,7 @@ class NewsPostBuilder:
         # 1. Generate Region Buttons
         for region in REGION_HEADINGS.keys():
             slug = MarkdownFormatter.slugify(region)
+            # No indentation in the f-string to prevent markdown code blocks
             links.append(f'<a href="#{slug}" style="{btn_style}">{region}</a>')
 
         # 2. Add In-Depth Analysis Button
@@ -185,12 +195,26 @@ class NewsPostBuilder:
             f'<a href="#in-depth-analysis" style="{btn_style}">In-Depth Analysis</a>'
         )
 
-        # 3. Join and wrap in a centered container
-        # We use a centered div to layout the buttons horizontally
         nav_html = "\n".join(links)
 
-        return f"""<div style="text-align: center; margin: 20px 0;">{nav_html}</div>
-    """
+        # No indentation for the return string
+        return f'<div style="text-align: left; margin: 20px 0;">\n{nav_html}\n</div>'
+
+    def _build_back_to_top(self) -> str:
+        """
+        Constructs a 'Back to Top' button aligned to the right.
+        """
+        style = (
+            "display: inline-block; "
+            "padding: 4px 10px; "
+            "font-size: 0.8em; "
+            "color: #6c757d; "
+            "border: 1px solid #dee2e6; "
+            "border-radius: 4px; "
+            "text-decoration: none; "
+            "background-color: #fff;"
+        )
+        return f'<div style="text-align: left; margin-bottom: 10px;"><a href="#top" style="{style}">↑ Back to Top</a></div>'
 
     def _build_sources_footer(self, config: Dict[str, Any]) -> str:
         sources = config.get("sources", [])
@@ -202,7 +226,6 @@ class NewsPostBuilder:
 
         footer = [MarkdownFormatter.h3("Sources")]
 
-        # Using subscript <sub> to make text appear smaller without using <small>
         if datapoints:
             links = ", ".join([fmt_source(s) for s in datapoints])
             footer.append(f"**Mainstream Narratives:** {links}")
