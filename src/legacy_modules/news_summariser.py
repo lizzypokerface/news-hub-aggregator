@@ -1,9 +1,11 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 import os
 import re
 import pandas as pd
 from datetime import datetime
-from modules.content_summarizer import ContentSummarizer
+from legacy_modules.content_summarizer import ContentSummarizer
 
 logger = logging.getLogger(__name__)
 

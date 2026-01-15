@@ -1,3 +1,5 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import os
 import pandas as pd
 import logging

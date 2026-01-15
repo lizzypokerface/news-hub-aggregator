@@ -1,7 +1,9 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 import time
-from modules.content_extractor import ContentExtractor
-from modules.llm_client import LLMClient
+from legacy_modules.content_extractor import ContentExtractor
+from legacy_modules.llm_client import LLMClient
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

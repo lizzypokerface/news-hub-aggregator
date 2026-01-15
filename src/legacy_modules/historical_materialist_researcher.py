@@ -1,10 +1,12 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import os
 import logging
 import re
 from datetime import datetime
 from typing import List
-from modules.content_extractor import ContentExtractor
-from modules.llm_client import LLMClient
+from legacy_modules.content_extractor import ContentExtractor
+from legacy_modules.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +183,7 @@ class HistoricalMaterialistResearcher:
         ] = []  # Stores links in memory to avoid re-reading files
 
         # --- Helpers ---
-        self.extractor = ContentExtractor()
+        self.extractor = ContentExtractor(config)
         self.llm = LLMClient(config)
 
     def conduct_research(

@@ -1,3 +1,5 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 from typing import Optional, List, Dict, Any
 

@@ -1,3 +1,5 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 import re
 import time
@@ -221,6 +223,7 @@ class HeadlineSynthesizer:
             The final synthesized summary string.
         """
         # Unpack the dictionary to call the updated fetch method
+        # NOTE (HOTFIX): We currently do NOT summarize the headlines, just return the raw YouTube API results.
         headlines = self._fetch_headlines_youtube(channel["name"], channel["url"])
-        summary = self._synthesize_headlines_llm(channel["name"], headlines)
-        return summary
+        # summary = self._synthesize_headlines_llm(channel["name"], headlines)
+        return headlines

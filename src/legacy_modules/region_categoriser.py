@@ -1,6 +1,8 @@
+# Legacy module: retained for compatibility and slated for migration or deprecation.
+
 import logging
 from typing import List, Dict
-from modules.llm_client import LLMClient
+from legacy_modules.llm_client import LLMClient
 
 # --- Module-level Constants ---
 CATEGORIES: List[str] = [

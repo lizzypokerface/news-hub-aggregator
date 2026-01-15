@@ -1,6 +1,8 @@
 import pytest
 
-from src.modules.youtube_transcript_api_handler import YoutubeTranscriptApiHandler
+from src.legacy_modules.youtube_transcript_api_handler import (
+    YoutubeTranscriptApiHandler,
+)
 
 # --- Fixtures (Mock Data) ---
 
